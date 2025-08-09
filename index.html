@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Misty Drone — Dream Organ (Feature Build v1.3)</title>
+<title>Misty Drone — Dream Organ (Feature Build v1.3.1)</title>
 <style>
   :root { --bg:#0b0f14; --text:#e9f1f7; --muted:#94a3b8; --accent:#67d4ff; --accent2:#b486ff; --good:#69e089; --warn:#ffcc66; --bad:#ff6b6b; }
   html,body{height:100%;margin:0;background:
@@ -22,7 +22,7 @@
   .state{font-size:12px;color:var(--muted);}
   .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);}
   .ok{border-color:rgba(105,224,137,.4); background:rgba(105,224,137,.12);}
-  .err{border-color:rgba(255,107,107,.4); background:rgba(255,255,255,.12);}
+  .err{border-color:rgba(255,107,107,.4); background:rgba(255,107,107,.12);}
   .grid{display:grid;gap:16px;grid-template-columns:1.1fr 1fr;}
   @media (max-width:980px){.grid{grid-template-columns:1fr;}}
   .panel{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));}
@@ -46,7 +46,7 @@
   <header>
     <div class="row">
       <h1>Misty Drone</h1>
-      <span class="pill">dreamy organ — feature build v1.3</span>
+      <span class="pill">dreamy organ — feature build v1.3.1</span>
     </div>
     <div class="row">
       <button id="startBtn" class="btn">Start Audio</button>
@@ -137,7 +137,7 @@
   const dbToGain=db=>Math.pow(10, db/20);
   const rmsToDbfs=rms=>20*Math.log10(rms || 1e-12);
   const noteNameOf=f=>{ if(!f||!isFinite(f)||f<=0) return "—"; const n=Math.round(12*Math.log2(f/A4))+69; return NOTE_NAMES[(n%12+12)%12]+(Math.floor(n/12)-1); };
-  const LS_KEY='misty-drone-v1.3';
+  const LS_KEY='misty-drone-v1.3.1';
 
   // ===== DOM =====
   const $=id=>document.getElementById(id);
@@ -166,12 +166,12 @@
   let lpf, d1, d2, lfo1, lfo2, lfoG1, lfoG2, dryMix, revSend, convolver, revRet, revMix, fxOut;
   let micStream, micSource, micGain, preamp, comp, analyser, timeData;
   let lastStableFreq=0, stableCount=0, envVis=0;
-  let voices=[];
+  let voices=[]; // <-- only declared once
 
-  // Freeze state (+ base root for re-harmonising while frozen)
+  // Freeze state
   let holdFrozen=false;
   let frozenTargets=[];
-  let frozenRootHz=0; // quantized root we’ll rebuild harmonies from
+  let frozenRootHz=0; // base root for re-harmonising while frozen
 
   // ===== Settings =====
   function saveSettings(){
@@ -225,7 +225,8 @@
     lpf = audioCtx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=parseFloat(toneEl.value); lpf.Q.value=0.5;
     d1 = audioCtx.createDelay(); d2 = audioCtx.createDelay(); d1.delayTime.value=0.012; d2.delayTime.value=0.018;
     lfo1 = audioCtx.createOscillator(); lfo2 = audioCtx.createOscillator(); lfoG1 = audioCtx.createGain(); lfoG2 = audioCtx.createGain();
-    lfo1.frequency.value=0.28; lfo2.frequency.value=0.41; lfoG1.gain.value=0.006; lfoG2.gain.value=0.008;
+    lfo1.frequency.value=0.28; lfo2.value=undefined; // avoid accidental undefined property
+    lfo2.frequency.value=0.41; lfoG1.gain.value=0.006; lfoG2.gain.value=0.008;
     lfo1.connect(lfoG1).connect(d1.delayTime); lfo2.connect(lfoG2).connect(d2.delayTime); lfo1.start(); lfo2.start();
     dryMix = audioCtx.createGain(); dryMix.gain.value=1.0;
     revSend = audioCtx.createGain(); revSend.gain.value=0.25;
@@ -250,7 +251,6 @@
   }
 
   // ===== Organ voices =====
-  let voices=[];
   function makeVoice(freq){
     const osc1=audioCtx.createOscillator(), osc2=audioCtx.createOscillator();
     const vGain=audioCtx.createGain(); vGain.gain.value=0.0001;
@@ -344,7 +344,7 @@
     }
   };
 
-  // ===== Analysis (Auto-Follow respects Freeze) =====
+  // ===== Analysis =====
   function analyse(){
     if (!analyser){ requestAnimationFrame(analyse); return; }
     analyser.getFloatTimeDomainData(timeData);
@@ -389,7 +389,7 @@
   }
   function quantizeToET(f){ if(!f||!isFinite(f)||f<=0) return f; const midi=Math.round(12*Math.log2(f/A4)+69); return A4*Math.pow(2,(midi-69)/12); }
 
-  // ===== Simple tests & panic =====
+  // ===== Tests & panic =====
   beepBtn?.addEventListener('click', async ()=>{ await startAudio();
     const o=audioCtx.createOscillator(), g=audioCtx.createGain(); g.gain.value=0.2; o.type='sine'; o.frequency.value=440;
     o.connect(g).connect(audioCtx.destination); const t=audioCtx.currentTime; o.start(t); o.stop(t+1); });
@@ -408,10 +408,10 @@
 
   // ===== Freeze / Release =====
   function currentRootFromVoices(){
-    if (voices.length) return Math.min(...voices.map(v=>v.freq)); // take lowest
+    if (voices.length) return Math.min(...voices.map(v=>v.freq)); // lowest voice
     if (lastStableFreq>0) return quantizeToET(lastStableFreq);
     return 0;
-  }
+    }
   function updateFrozenIfNeeded(){
     if (holdFrozen && frozenRootHz>0){
       frozenTargets = applyHarmony(frozenRootHz);
@@ -432,7 +432,7 @@
     holdFrozen = false;
     frozenTargets = [];
     frozenRootHz = 0;
-    setDrone([]); // analyse() will resume follow if enabled
+    setDrone([]);
     freezeBtn.classList.remove('toggled');
   };
 
@@ -440,8 +440,6 @@
   startBtn.onclick = async ()=>{ await startAudio(); };
   fxOnEl.onchange = ()=>{ setFxActive(fxOnEl.checked); saveSettings(); };
   autoFollowEl.onchange = saveSettings;
-
-  // When harmony toggles change, save AND (if frozen) re-render the frozen chord
   Object.values(H).forEach(el=> el.addEventListener('change', ()=>{ saveSettings(); updateFrozenIfNeeded(); }));
 
   volumeEl.oninput = e=>{ volVal.textContent=(+e.target.value).toFixed(2); if(outGain) outGain.gain.value=parseFloat(e.target.value); saveSettings(); };
@@ -458,12 +456,11 @@
   function updateCtxState(){ ctxStateEl.textContent = audioCtx ? audioCtx.state : "—"; }
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && audioCtx && audioCtx.state!=='running'){ audioCtx.resume().then(updateCtxState); } });
 
-  // ===== Visualiser: Two giant ASCII cats =====
+  // ===== Visualiser: two giant ASCII cats =====
   const noise=(n=>{ const a=new Float32Array(n); for(let i=0;i<n;i++) a[i]=Math.random(); return a; })(256);
   const vn1=p=>{ const n=noise.length,i0=Math.floor(p)%n,i1=(i0+1)%n,t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; };
   const fbm=(x,y,z)=>{ let tot=0,amp=0.6,f=1; for(let o=0;o<4;o++){ const s=vn1(x*f+y*f*1.37+z*f*0.77); tot+=s*amp; amp*=0.5; f*=2.1; } return tot; };
 
-  // Left-facing frames
   const catL = [
 `  /\\_/\\
  ( o.o )
@@ -475,7 +472,6 @@
  ( o.o )
   > v <`
   ];
-  // Right-facing frames (mirrored mouth/cheeks so they face each other)
   const catR = [
 `  /\\_/\\
  ( o.o )
@@ -525,11 +521,10 @@
       }
     }
 
-    // Giant ASCII cats: target ~80% of canvas height
-    const lines = 3;                  // our cat art has 3 lines
-    const lineGap = 1.15;             // line spacing multiplier
+    // Cats ~80% height
+    const lines = 3, lineGap = 1.15;
     const catHeight = canvas.height * 0.80;
-    const px = Math.max(10, Math.floor(catHeight / (lines * lineGap))); // font size in device pixels
+    const px = Math.max(10, Math.floor(catHeight / (lines * lineGap)));
     const lineStep = Math.floor(px * lineGap);
 
     // Animate frame rate (slower when quiet)
@@ -545,27 +540,23 @@
     vctx.textAlign='center';
     vctx.font = `${px}px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`;
 
-    // Vertical centering + bobbing (phase-shifted per cat)
     const baseY = Math.floor((canvas.height - (lines-1)*lineStep - px) / 2);
     const bobL = Math.sin(t*0.002 + intensity*2.0) * (8 * (0.4+0.6*intensity));
     const bobR = Math.sin(t*0.002 + Math.PI + intensity*1.6) * (8 * (0.4+0.6*intensity));
 
-    // Horizontal sway
     const sway = Math.sin(t*0.001) * (6 * (0.2+0.8*intensity));
     const cxL = Math.floor(canvas.width*0.30 + sway);
     const cxR = Math.floor(canvas.width*0.70 - sway);
 
-    // Left cat glow
+    // Left cat glow + main
     vctx.fillStyle = `rgba(103,212,255,${0.15+0.25*intensity})`;
     Lcat.forEach((line,i)=>{ vctx.fillText(line, cxL+1, baseY + i*lineStep + 1 + bobL); });
-    // Left cat main
     vctx.fillStyle = `rgba(233,241,247,0.9)`;
     Lcat.forEach((line,i)=>{ vctx.fillText(line, cxL,   baseY + i*lineStep     + bobL); });
 
-    // Right cat glow
+    // Right cat glow + main
     vctx.fillStyle = `rgba(180,134,255,${0.15+0.25*intensity})`;
     Rcat.forEach((line,i)=>{ vctx.fillText(line, cxR+1, baseY + i*lineStep + 1 + bobR); });
-    // Right cat main
     vctx.fillStyle = `rgba(233,241,247,0.9)`;
     Rcat.forEach((line,i)=>{ vctx.fillText(line, cxR,   baseY + i*lineStep     + bobR); });
 
