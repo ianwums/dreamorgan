@@ -54,7 +54,7 @@
   }
   .toggle input { width: 18px; height: 18px; }
   .readouts { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0,1fr)); margin-top: 10px; }
-  @media (max-width: 700px) { .readouts { grid-template-columns: repeat(1, minmax(0,1fr)); } }
+  @media (max-width: 700px) { .readouts { grid-template-columns: 1fr; } }
   .chip {
     background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
     border-radius: 10px; padding: 8px; min-height: 48px;
@@ -175,11 +175,11 @@
 (function(){
   // ===== Constants & utils =====
   const A4 = 440;
-  const NOTE_NAMES = ["C","C♯","D","E♭","E","F","F♯","G","A","B♭","B","H"]; // Adjusted for readability; B/H quirk ignored in name mapping
+  const NOTE_NAMES = ["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
   function freqToNoteName(f){
     if(!isFinite(f) || f<=0) return "—";
     const n = Math.round(12 * Math.log2(f / A4)) + 69; // MIDI
-    const name = ["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"][(n % 12 + 12) % 12];
+    const name = NOTE_NAMES[(n % 12 + 12) % 12];
     const octave = Math.floor(n/12) - 1;
     return `${name}${octave}`;
   }
@@ -227,19 +227,19 @@
   const harmUseDetectedEl = document.getElementById('harmUseDetected');
   const harmStackEl = document.getElementById('harmStack');
 
-  // ===== Audio nodes =====
-  let audioCtx, micSource, micGain, analyser, analyserFFT;
+  // ===== Audio nodes / state =====
+  let audioCtx, micStream, micSource, micGain, analyser, analyserFFT;
   let outGain, lpFilter, reverbSend, reverbReturn, reverbMix, chorusDelay1, chorusDelay2, master;
-  let preamp, comp;
-  let droneVoices = []; // active oscillators per target note
-  let envGain; // envelope control
+  let preamp, comp, keepAlive;
+  let droneVoices = [];
+  let envGain;
   let started = false;
 
   // Pitch buffers
   let timeData, freqData;
   let lastStableFreq = 0, stableCount = 0;
 
-  // Envelope state for visualizer
+  // Visualiser envelope proxy
   let currentEnvLevel = 0;
 
   async function start(){
@@ -250,12 +250,12 @@
     audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
 
     // Mic
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: {
-      echoCancellation: false, noiseSuppression: false, autoGainControl: false
-    }});
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false }
+    });
     micLed.classList.add('on');
 
-    micSource = audioCtx.createMediaStreamSource(stream);
+    micSource = audioCtx.createMediaStreamSource(micStream);
     micGain = audioCtx.createGain(); micGain.gain.value = parseFloat(micGainEl.value);
 
     // Boost + dynamics before analysis
@@ -312,14 +312,19 @@
     master = audioCtx.createGain(); master.gain.value = 1.0;
 
     // Routing:
-    // Mic -> micGain -> preamp (dB) -> compressor -> (analyser, analyserFFT)
+    // Mic -> micGain -> preamp -> comp -> (analyser, analyserFFT) + keepAlive(silent) -> destination
     micSource.connect(micGain);
     micGain.connect(preamp);
     preamp.connect(comp);
     comp.connect(analyser);
     comp.connect(analyserFFT);
 
-    // Drone env -> LPF -> ChorusDelays -> (dry to master, reverb send -> convolver -> reverbMix) -> out
+    // keep mic graph alive (silent)
+    keepAlive = audioCtx.createGain();
+    keepAlive.gain.value = 0.0;
+    comp.connect(keepAlive).connect(audioCtx.destination);
+
+    // Drone env -> LPF -> Chorus -> dry+reverb -> master -> out
     envGain.connect(lpFilter);
     const merger = audioCtx.createChannelMerger(2);
     lpFilter.connect(chorusDelay1);
@@ -330,8 +335,9 @@
     const postChorus = audioCtx.createGain(); postChorus.gain.value = 1.0;
     merger.connect(postChorus);
     postChorus.connect(reverbSend);
-    reverbSend.connect(convolver);
-    convolver.connect(reverbReturn);
+    const convolverReturn = convolver; // already set
+    reverbSend.connect(convolverReturn);
+    convolverReturn.connect(reverbReturn);
     reverbReturn.connect(reverbMix);
 
     postChorus.connect(master); // dry
@@ -349,6 +355,16 @@
   }
 
   startBtn.addEventListener('click', start);
+
+  // Auto-resume if browser suspends on tab change
+  document.addEventListener('visibilitychange', ()=>{
+    if (document.visibilityState === 'visible' && audioCtx && audioCtx.state !== 'running') {
+      audioCtx.resume();
+    }
+  });
+  window.addEventListener('focus', ()=>{
+    if (audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+  });
 
   // ===== Drone Synth =====
   function setTargetsFromDetection(detectedHzList){
@@ -470,7 +486,6 @@
 
     // Autocorrelation pitch detection (with lower quiet threshold)
     const freq = autoCorrelate(timeData, audioCtx.sampleRate);
-    const dominantHz = freq || 0;
 
     // Stability heuristic
     if (freq && Math.abs(freq - lastStableFreq) < 1.5) {
@@ -517,7 +532,7 @@
     let rms = 0;
     for (let i=0;i<SIZE;i++){ const v = buf[i]; rms += v*v; }
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.001) return null; // lowered so softer sources still register
+    if (rms < 0.001) return null; // softer sources still register
 
     let r1=0, r2=SIZE-1, thres=0.2;
     for (let i=0;i<SIZE/2;i++){ if (Math.abs(buf[i])<thres){ r1=i; break; } }
@@ -715,7 +730,6 @@
     const rect = canvas.getBoundingClientRect();
     canvas.width = Math.floor(rect.width * ratio);
     canvas.height = Math.floor(420 * ratio);
-    // meter is small; keep width fixed; height is fixed
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
