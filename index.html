@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Misty Drone — Dream Organ (Feature Build v1.2)</title>
+<title>Misty Drone — Dream Organ (Feature Build v1.3)</title>
 <style>
   :root { --bg:#0b0f14; --text:#e9f1f7; --muted:#94a3b8; --accent:#67d4ff; --accent2:#b486ff; --good:#69e089; --warn:#ffcc66; --bad:#ff6b6b; }
   html,body{height:100%;margin:0;background:
@@ -22,7 +22,7 @@
   .state{font-size:12px;color:var(--muted);}
   .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);}
   .ok{border-color:rgba(105,224,137,.4); background:rgba(105,224,137,.12);}
-  .err{border-color:rgba(255,107,107,.4); background:rgba(255,107,107,.12);}
+  .err{border-color:rgba(255,107,107,.4); background:rgba(255,255,255,.12);}
   .grid{display:grid;gap:16px;grid-template-columns:1.1fr 1fr;}
   @media (max-width:980px){.grid{grid-template-columns:1fr;}}
   .panel{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));}
@@ -46,13 +46,12 @@
   <header>
     <div class="row">
       <h1>Misty Drone</h1>
-      <span class="pill">dreamy organ — feature build v1.2</span>
+      <span class="pill">dreamy organ — feature build v1.3</span>
     </div>
     <div class="row">
       <button id="startBtn" class="btn">Start Audio</button>
       <label class="row" style="gap:6px;"><input id="fxOn" type="checkbox"><span class="state">FX On</span></label>
       <label class="row" style="gap:6px;"><input id="autoFollow" type="checkbox" checked><span class="state">Auto-Follow Mic</span></label>
-      <!-- Freeze/Release -->
       <button id="freezeBtn" class="btn secondary" title="Hold current notes">Freeze</button>
       <button id="releaseBtn" class="btn secondary" title="Release held notes">Release</button>
     </div>
@@ -138,7 +137,7 @@
   const dbToGain=db=>Math.pow(10, db/20);
   const rmsToDbfs=rms=>20*Math.log10(rms || 1e-12);
   const noteNameOf=f=>{ if(!f||!isFinite(f)||f<=0) return "—"; const n=Math.round(12*Math.log2(f/A4))+69; return NOTE_NAMES[(n%12+12)%12]+(Math.floor(n/12)-1); };
-  const LS_KEY='misty-drone-v1.2';
+  const LS_KEY='misty-drone-v1.3';
 
   // ===== DOM =====
   const $=id=>document.getElementById(id);
@@ -169,9 +168,10 @@
   let lastStableFreq=0, stableCount=0, envVis=0;
   let voices=[];
 
-  // Freeze state
+  // Freeze state (+ base root for re-harmonising while frozen)
   let holdFrozen=false;
   let frozenTargets=[];
+  let frozenRootHz=0; // quantized root we’ll rebuild harmonies from
 
   // ===== Settings =====
   function saveSettings(){
@@ -193,9 +193,7 @@
         if (el) el.value=v;
         if (k==='fxOn') fxOnEl.checked=v;
         if (k==='autoFollow') autoFollowEl.checked=v;
-        if (k==='harm' && typeof v==='object'){
-          for (const [hk,hv] of Object.entries(v)){ if (H[hk]) H[hk].checked = hv; }
-        }
+        if (k==='harm' && typeof v==='object'){ for (const [hk,hv] of Object.entries(v)){ if (H[hk]) H[hk].checked = hv; } }
       }
     }catch{}
     volVal.textContent=(+volumeEl.value).toFixed(2);
@@ -252,6 +250,7 @@
   }
 
   // ===== Organ voices =====
+  let voices=[];
   function makeVoice(freq){
     const osc1=audioCtx.createOscillator(), osc2=audioCtx.createOscillator();
     const vGain=audioCtx.createGain(); vGain.gain.value=0.0001;
@@ -304,7 +303,7 @@
     if (freqs.length) openEnv(); else closeEnv();
   }
 
-  // Build harmony list based on toggles
+  // Harmony helpers
   function semitone(n){ return Math.pow(2, n/12); }
   function applyHarmony(rootHz){
     const freqs = new Set([rootHz]);
@@ -408,11 +407,23 @@
   panicBtn?.addEventListener('click', ()=>{ voices.forEach(v=>{ try{ v.osc1.stop(); v.osc2.stop(); }catch{} }); voices.length=0; closeEnv(); });
 
   // ===== Freeze / Release =====
+  function currentRootFromVoices(){
+    if (voices.length) return Math.min(...voices.map(v=>v.freq)); // take lowest
+    if (lastStableFreq>0) return quantizeToET(lastStableFreq);
+    return 0;
+  }
+  function updateFrozenIfNeeded(){
+    if (holdFrozen && frozenRootHz>0){
+      frozenTargets = applyHarmony(frozenRootHz);
+      setDrone(frozenTargets);
+    }
+  }
+
   freezeBtn.onclick = ()=>{
-    let targets = voices.length ? voices.map(v=>v.freq)
-      : (lastStableFreq>0 ? applyHarmony(quantizeToET(lastStableFreq)) : []);
-    if (!targets.length) return;
-    frozenTargets = targets.slice();
+    const root = currentRootFromVoices();
+    if (!root) return;
+    frozenRootHz = root;
+    frozenTargets = applyHarmony(frozenRootHz);
     holdFrozen = true;
     setDrone(frozenTargets);
     freezeBtn.classList.add('toggled');
@@ -420,7 +431,8 @@
   releaseBtn.onclick = ()=>{
     holdFrozen = false;
     frozenTargets = [];
-    setDrone([]);
+    frozenRootHz = 0;
+    setDrone([]); // analyse() will resume follow if enabled
     freezeBtn.classList.remove('toggled');
   };
 
@@ -428,7 +440,9 @@
   startBtn.onclick = async ()=>{ await startAudio(); };
   fxOnEl.onchange = ()=>{ setFxActive(fxOnEl.checked); saveSettings(); };
   autoFollowEl.onchange = saveSettings;
-  Object.values(H).forEach(el=> el.addEventListener('change', saveSettings));
+
+  // When harmony toggles change, save AND (if frozen) re-render the frozen chord
+  Object.values(H).forEach(el=> el.addEventListener('change', ()=>{ saveSettings(); updateFrozenIfNeeded(); }));
 
   volumeEl.oninput = e=>{ volVal.textContent=(+e.target.value).toFixed(2); if(outGain) outGain.gain.value=parseFloat(e.target.value); saveSettings(); };
   attackEl.oninput = e=>{ attackVal.textContent=(+e.target.value).toFixed(2)+'s'; saveSettings(); };
@@ -444,12 +458,13 @@
   function updateCtxState(){ ctxStateEl.textContent = audioCtx ? audioCtx.state : "—"; }
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && audioCtx && audioCtx.state!=='running'){ audioCtx.resume().then(updateCtxState); } });
 
-  // ===== Visualiser + ASCII cat =====
+  // ===== Visualiser: Two giant ASCII cats =====
   const noise=(n=>{ const a=new Float32Array(n); for(let i=0;i<n;i++) a[i]=Math.random(); return a; })(256);
   const vn1=p=>{ const n=noise.length,i0=Math.floor(p)%n,i1=(i0+1)%n,t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; };
   const fbm=(x,y,z)=>{ let tot=0,amp=0.6,f=1; for(let o=0;o<4;o++){ const s=vn1(x*f+y*f*1.37+z*f*0.77); tot+=s*amp; amp*=0.5; f*=2.1; } return tot; };
 
-  const catFrames = [
+  // Left-facing frames
+  const catL = [
 `  /\\_/\\
  ( o.o )
   > ^ <`,
@@ -460,14 +475,28 @@
  ( o.o )
   > v <`
   ];
+  // Right-facing frames (mirrored mouth/cheeks so they face each other)
+  const catR = [
+`  /\\_/\\
+ ( o.o )
+  < ^ >`,
+`  /\\_/\\
+ ( -.- )
+  < ^ >`,
+`  /\\_/\\
+ ( o.o )
+  < v >`
+  ];
   let catIndex=0, catTimer=0;
 
   function draw(){
+    // Retina sizing
     const rect=canvas.getBoundingClientRect(), ratio=window.devicePixelRatio||1;
     const wantW=Math.floor(rect.width*ratio), wantH=Math.floor(420*ratio);
     if (canvas.width!==wantW || canvas.height!==wantH){ canvas.width=wantW; canvas.height=wantH; }
     const t=performance.now();
 
+    // Envelope + idle
     const idle = 0.12 + 0.08*Math.sin(t*0.0013);
     const env = (audioCtx && envGain) ? envGain.gain.value : 0;
     envVis = envVis*0.9 + (env||0)*0.1;
@@ -496,35 +525,56 @@
       }
     }
 
-    // ASCII Cat — slow dance/bob with envelope
-    catTimer += 1;
-    const framePeriod = 40 + Math.floor(40*(1-intensity)); // slower when quiet
-    if (catTimer >= framePeriod){ catTimer=0; catIndex=(catIndex+1)%catFrames.length; }
-    const cat = catFrames[catIndex].split("\n");
+    // Giant ASCII cats: target ~80% of canvas height
+    const lines = 3;                  // our cat art has 3 lines
+    const lineGap = 1.15;             // line spacing multiplier
+    const catHeight = canvas.height * 0.80;
+    const px = Math.max(10, Math.floor(catHeight / (lines * lineGap))); // font size in device pixels
+    const lineStep = Math.floor(px * lineGap);
 
-    vctx.globalAlpha = 0.85;
+    // Animate frame rate (slower when quiet)
+    catTimer += 1;
+    const framePeriod = 30 + Math.floor(50*(1-intensity));
+    if (catTimer >= framePeriod){ catTimer=0; catIndex=(catIndex+1)%catL.length; }
+    const Lcat = catL[catIndex].split("\n");
+    const Rcat = catR[catIndex].split("\n");
+
+    // Positions
+    vctx.globalAlpha = 0.9;
     vctx.globalCompositeOperation='source-over';
     vctx.textAlign='center';
-    const px = Math.round(14 * ratio);
     vctx.font = `${px}px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`;
-    // bobbing offset
-    const bob = Math.sin(t*0.002 + intensity*2.0) * (6*ratio) * (0.4+0.6*intensity);
-    const cx = Math.floor(canvas.width/2);
-    const cy = Math.floor(canvas.height*0.75 + bob);
 
-    // shadow glow
+    // Vertical centering + bobbing (phase-shifted per cat)
+    const baseY = Math.floor((canvas.height - (lines-1)*lineStep - px) / 2);
+    const bobL = Math.sin(t*0.002 + intensity*2.0) * (8 * (0.4+0.6*intensity));
+    const bobR = Math.sin(t*0.002 + Math.PI + intensity*1.6) * (8 * (0.4+0.6*intensity));
+
+    // Horizontal sway
+    const sway = Math.sin(t*0.001) * (6 * (0.2+0.8*intensity));
+    const cxL = Math.floor(canvas.width*0.30 + sway);
+    const cxR = Math.floor(canvas.width*0.70 - sway);
+
+    // Left cat glow
     vctx.fillStyle = `rgba(103,212,255,${0.15+0.25*intensity})`;
-    cat.forEach((line,i)=>{ vctx.fillText(line, cx+1, cy + i*px*1.1 + 1); });
+    Lcat.forEach((line,i)=>{ vctx.fillText(line, cxL+1, baseY + i*lineStep + 1 + bobL); });
+    // Left cat main
+    vctx.fillStyle = `rgba(233,241,247,0.9)`;
+    Lcat.forEach((line,i)=>{ vctx.fillText(line, cxL,   baseY + i*lineStep     + bobL); });
 
-    // main text
-    vctx.fillStyle = `rgba(233,241,247,${0.8})`;
-    cat.forEach((line,i)=>{ vctx.fillText(line, cx, cy + i*px*1.1); });
+    // Right cat glow
+    vctx.fillStyle = `rgba(180,134,255,${0.15+0.25*intensity})`;
+    Rcat.forEach((line,i)=>{ vctx.fillText(line, cxR+1, baseY + i*lineStep + 1 + bobR); });
+    // Right cat main
+    vctx.fillStyle = `rgba(233,241,247,0.9)`;
+    Rcat.forEach((line,i)=>{ vctx.fillText(line, cxR,   baseY + i*lineStep     + bobR); });
 
     vctx.globalAlpha=1;
     requestAnimationFrame(draw);
   }
   requestAnimationFrame(draw);
 
+  // Meter
   function drawMeter(db){
     const w=inMeter.width,h=inMeter.height; mctx.clearRect(0,0,w,h);
     const n=Math.max(0,Math.min(1,(db+90)/90));
@@ -533,7 +583,7 @@
     mctx.fillRect(0,0,Math.floor(w*n),h);
   }
 
-  // ===== IR helper =====
+  // Convolution IR
   function buildIR(ctx,dur=2.2,decay=0.4){
     const rate=ctx.sampleRate, len=Math.floor(rate*dur), buf=ctx.createBuffer(2,len,rate);
     for(let ch=0; ch<2; ch++){ const d=buf.getChannelData(ch); for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay*3); } }
