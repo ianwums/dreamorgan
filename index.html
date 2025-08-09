@@ -6,32 +6,48 @@
 <title>Misty Drone — Mic-Aware Dream Organ</title>
 <style>
   :root {
-    --bg: #0b0f14; --panel: #121823; --muted: #8aa0b2; --text: #e9f1f7;
-    --accent: #67d4ff; --accent-2: #b486ff; --good: #69e089; --warn: #ffcc66; --bad: #ff6b6b;
+    --bg: #0b0f14;
+    --panel: #121823;
+    --muted: #8aa0b2;
+    --text: #e9f1f7;
+    --accent: #67d4ff;
+    --accent-2: #b486ff;
+    --good: #69e089;
+    --warn: #ffcc66;
+    --bad: #ff6b6b;
   }
-  html, body { height: 100%; background:
+  html, body {
+    height: 100%;
+    background:
       radial-gradient(1200px 700px at 70% -10%, rgba(103,212,255,0.06), transparent 60%),
       radial-gradient(900px 600px at -10% 120%, rgba(180,134,255,0.07), transparent 60%),
       var(--bg);
     color: var(--text);
-    font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    font: 15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
   }
   .wrap { max-width: 1100px; margin: 24px auto; padding: 16px; }
-  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
-  h1 { font-weight:700; font-size:20px; letter-spacing:.6px; margin:0; color:var(--text); }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  h1 { font-weight:700; font-size:20px; letter-spacing:.6px; margin:0; }
   .pill { background: linear-gradient(135deg, rgba(103,212,255,0.2), rgba(180,134,255,0.2));
-    border: 1px solid rgba(103,212,255,0.3); padding:8px 12px; border-radius:999px; font-size:12px; color:var(--muted); }
+          border: 1px solid rgba(103,212,255,0.3); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .state { font-size:12px; color:var(--muted); }
   .grid { display:grid; gap:16px; grid-template-columns:1.2fr 1fr; }
   @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
-  .panel { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
-    border:1px solid rgba(255,255,255,0.06); border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05); padding:14px; }
+  .panel {
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:16px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+    padding:14px;
+  }
   .panel h2 { margin:0 0 10px; font-size:14px; color:var(--muted); font-weight:600; letter-spacing:.4px; }
   .controls { display:grid; gap:10px; grid-template-columns: repeat(2, minmax(0,1fr)); }
   .controls .row { display:grid; gap:8px; background:rgba(255,255,255,0.02); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.05); }
   .controls label { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; align-items:baseline; }
   input[type="range"]{ width:100%; accent-color:var(--accent); }
   .toggles{ display:flex; flex-wrap:wrap; gap:10px; }
-  .toggle{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); cursor:pointer; user-select:none; }
+  .toggle{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); user-select:none; }
   .toggle input{ width:18px; height:18px; }
   .readouts{ display:grid; gap:8px; grid-template-columns:repeat(3, minmax(0,1fr)); margin-top:10px; }
   @media (max-width:700px){ .readouts{ grid-template-columns:1fr; } }
@@ -40,20 +56,22 @@
   .note{ font-size:28px; font-weight:700; letter-spacing:1px; }
   .hz{ font-size:12px; color:var(--muted); }
   .status{ font-size:12px; margin-top:6px; color:var(--muted); }
-  .btn{ appearance:none; border:0; padding:10px 14px; border-radius:12px; color:var(--bg);
+  .btn{
+    appearance:none; border:0; padding:10px 14px; border-radius:12px; color: var(--bg);
     background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight:700;
-    box-shadow:0 10px 25px rgba(103,212,255,0.25), inset 0 1px 0 rgba(255,255,255,0.3); cursor:pointer; }
-  .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    box-shadow:0 10px 25px rgba(103,212,255,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
+    cursor:pointer;
+  }
   .btn.secondary{ background: rgba(255,255,255,0.08); color: var(--text); box-shadow:none; border:1px solid rgba(255,255,255,0.15); }
-  .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-  canvas#mist{ width:100%; height:420px; display:block; border-radius:14px;
-    background: radial-gradient(600px 300px at 50% 10%, rgba(255,255,255,0.02), transparent 70%), transparent; filter: blur(0.3px); }
-  footer{ margin-top:16px; color:var(--muted); font-size:12px; text-align:center; }
+  .btn:disabled { opacity:.6; cursor:not-allowed; }
   .led{ display:inline-block; width:10px; height:10px; border-radius:50%; background:#444; margin-left:8px; box-shadow:0 0 0 2px rgba(255,255,255,0.03) inset; }
   .led.on{ background:var(--good); box-shadow:0 0 12px var(--good); }
   .led.warn{ background:var(--warn); box-shadow:0 0 10px var(--warn); }
   .led.bad{ background:var(--bad); box-shadow:0 0 10px var(--bad); }
-  .small{ font-size:11px; color:var(--muted); }
+  canvas#mist{ width:100%; height:420px; display:block; border-radius:14px;
+               background: radial-gradient(600px 300px at 50% 10%, rgba(255,255,255,0.02), transparent 70%), transparent;
+               filter: blur(0.3px); }
+  footer{ margin-top:16px; color:var(--muted); font-size:12px; text-align:center; }
 </style>
 </head>
 <body>
@@ -61,10 +79,12 @@
   <header>
     <h1>Misty Drone <span class="pill">mic-aware dreamy organ</span></h1>
     <div class="actions">
-      <button id="startBtn" class="btn">Enable Microphone & Start</button>
+      <button id="startBtn"  class="btn">Enable Microphone & Start</button>
       <button id="resumeBtn" class="btn secondary" title="Resume audio & restart mic if needed">Force Resume</button>
-      <button id="testBtn" class="btn secondary" title="Bypass detection and play a test drone">Test Drone</button>
+      <button id="beepBtn"   class="btn secondary" title="Direct 440 Hz tone for 1s">Beep 1s</button>
+      <button id="testBtn"   class="btn secondary" title="Bypass detection and play a test drone">Test Drone</button>
       <label class="toggle" title="Low-level monitor to help debugging"><input id="monitorMic" type="checkbox"> Monitor Mic</label>
+      <div class="state">AudioContext: <span id="ctxState">—</span></div>
     </div>
   </header>
 
@@ -118,7 +138,7 @@
     </section>
   </div>
 
-  <footer>Tip: for accurate results, use headphones or lower your speakers to avoid feedback. This app needs HTTPS for the mic.</footer>
+  <footer>Tip: use headphones or keep speakers low to avoid feedback. HTTPS is required for the mic.</footer>
 </div>
 
 <script>
@@ -131,10 +151,12 @@
   const rmsToDbfs = rms=>20*Math.log10(rms || 1e-12);
 
   // ===== DOM =====
-  const startBtn = document.getElementById('startBtn');
+  const startBtn  = document.getElementById('startBtn');
   const resumeBtn = document.getElementById('resumeBtn');
-  const testBtn = document.getElementById('testBtn');
+  const beepBtn   = document.getElementById('beepBtn');
+  const testBtn   = document.getElementById('testBtn');
   const monitorMicEl = document.getElementById('monitorMic');
+  const ctxStateEl = document.getElementById('ctxState');
 
   const micGainEl = document.getElementById('micGain');
   const preampEl  = document.getElementById('preamp');
@@ -179,7 +201,7 @@
   let outGain, lpFilter, reverbSend, reverbReturn, reverbMix, chorusDelay1, chorusDelay2, master;
   let preamp, comp, keepAlive, monitorGain;
   let droneVoices = [], envGain;
-  let watchdogTimer = 0, silenceFrames = 0;
+  let silenceFrames = 0;
   let started = false, testMode = false;
 
   // Pitch buffers
@@ -187,17 +209,19 @@
   let lastStableFreq = 0, stableCount = 0;
   let currentEnvLevel = 0;
 
+  // ===== Helpers =====
+  function updateCtxState(){
+    ctxStateEl.textContent = audioCtx ? audioCtx.state : '—';
+  }
+
   async function getMicStream(){
     if (micStream) { try { micStream.getTracks().forEach(t=>t.stop()); } catch{} }
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false }
     });
-    // Restart on track end (Safari sometimes ends after device changes)
     const track = micStream.getAudioTracks()[0];
     if (track){
       track.onended = ()=>{ restartMic("track ended"); };
-      track.onmute  = ()=>{}; // FYI hooks
-      track.onunmute= ()=>{};
     }
     return micStream;
   }
@@ -249,7 +273,7 @@
     comp.connect(analyser);
     comp.connect(analyserFFT);
 
-    // Optional: monitor mic quietly for debugging
+    // Optional mic monitor (debug)
     monitorGain = audioCtx.createGain(); monitorGain.gain.value = 0.0;
     comp.connect(monitorGain).connect(audioCtx.destination);
 
@@ -270,74 +294,59 @@
     postChorus.connect(master); reverbMix.connect(master); master.connect(outGain).connect(audioCtx.destination);
 
     micLed.classList.add('on');
+    updateCtxState();
   }
 
   async function start(){
     if (started) return;
     started = true;
     startBtn.disabled = true;
-    await buildGraph();
-    requestAnimationFrame(draw);
-    analysisLoop();
-    updateUIValues();
-    keepResuming(); // start keep-alive checker
-  }
-
-  // ---- Watchdog & auto-resume/resubscribe ----
-  async function restartMic(reason="watchdog"){
     try {
-      micLed.classList.remove('on'); micLed.classList.remove('warn'); micLed.classList.remove('bad');
       await buildGraph();
-    } catch (e) {
-      console.warn("Mic restart failed:", e);
+      requestAnimationFrame(draw);
+      analysisLoop();
+      updateUIValues();
+      keepResuming();
+    } catch (err){
+      alert('Microphone permission or setup failed. See console for details.');
+      console.error(err);
+      started = false;
+      startBtn.disabled = false;
     }
   }
 
+  async function ensureRunningGraph(){
+    if (!audioCtx){ await start(); return; }
+    if (audioCtx.state !== 'running'){ await audioCtx.resume(); updateCtxState(); }
+    if (!micSource){ await buildGraph(); }
+  }
+
+  // Auto-resume & device-change handling
   function keepResuming(){
-    // Resume on visibility/focus
     document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') resumeAudio(); });
     window.addEventListener('focus', resumeAudio);
-    // Resume on statechange
-    audioCtx.addEventListener?.('statechange', ()=>{ if (audioCtx.state !== 'running') resumeAudio(); });
-    // Periodic check
+    audioCtx.addEventListener?.('statechange', updateCtxState);
     setInterval(()=>{ if (audioCtx && audioCtx.state !== 'running') resumeAudio(); }, 4000);
-    // Rebuild on device change (e.g., switching mics)
     navigator.mediaDevices?.addEventListener?.('devicechange', ()=> restartMic("devicechange"));
   }
 
   async function resumeAudio(){
-    try { if (audioCtx && audioCtx.state !== 'running') await audioCtx.resume(); } catch {}
+    try { if (audioCtx && audioCtx.state !== 'running'){ await audioCtx.resume(); updateCtxState(); } } catch {}
   }
 
-  startBtn.addEventListener('click', start);
-  resumeBtn.addEventListener('click', async ()=>{
-    await resumeAudio();
-    await restartMic("manual");
-  });
-
-  // ---- Test Drone toggle (A4 + 5th) ----
-  testBtn.addEventListener('click', ()=>{
-    testMode = !testMode;
-    testBtn.textContent = testMode ? "Stop Test Drone" : "Test Drone";
-    if (testMode){
-      const a = 440, e = a * Math.pow(2,7/12);
-      setDroneTargets([a, e]);
-      holdEl.checked = true; // keep it held
-      synthLed.classList.add('on');
-    } else {
-      holdEl.checked = false;
-      setDroneTargets([]);
-      synthLed.classList.remove('on');
-    }
-  });
-
-  // ---- Monitor Mic toggle ----
-  monitorMicEl.addEventListener('change', ()=>{
-    if (!monitorGain) return;
-    monitorGain.gain.value = monitorMicEl.checked ? 0.05 : 0.0; // very low level
-  });
+  async function restartMic(reason="watchdog"){
+    try { await buildGraph(); } catch (e){ console.warn("Mic restart failed:", e); }
+  }
 
   // ===== Drone Synth =====
+  function freqToNoteName(f){
+    if(!isFinite(f) || f<=0) return "—";
+    const n = Math.round(12 * Math.log2(f / A4)) + 69;
+    const name = NOTE_NAMES[(n % 12 + 12) % 12];
+    const octave = Math.floor(n/12) - 1;
+    return `${name}${octave}`;
+  }
+
   function setTargetsFromDetection(detectedHzList){
     let targets = [];
     const useDetected = harmUseDetectedEl.checked;
@@ -393,10 +402,8 @@
 
     const anyOn = freqs.length>0 || (holdEl.checked && droneVoices.length>0);
     const tgt = anyOn ? 1.0 : 0.0;
-    if (envGain){
-      envGain.gain.cancelScheduledValues(now);
-      envGain.gain.linearRampToValueAtTime(tgt, now + (tgt>0?attack:release));
-    }
+    envGain.gain.cancelScheduledValues(now);
+    envGain.gain.linearRampToValueAtTime(tgt, now + (tgt>0?attack:release));
   }
 
   function makeVoice(freq){
@@ -429,7 +436,6 @@
     droneVoices.forEach(v => v.voiceFilter.frequency.value = val);
   }
 
-  // ===== Reverb builder =====
   function buildImpulseResponse(ctx, duration=2.5, decay=0.5){
     const rate = ctx.sampleRate, length = Math.floor(rate * duration);
     const impulse = ctx.createBuffer(2, length, rate);
@@ -440,9 +446,9 @@
     return impulse;
   }
 
-  // ===== Pitch & Note Detection with Watchdog =====
+  // ===== Pitch & Analysis =====
   function analysisLoop(){
-    if (!audioCtx) return;
+    if(!audioCtx) return;
 
     analyser.getFloatTimeDomainData(timeData);
     analyserFFT.getFloatFrequencyData(freqData);
@@ -456,10 +462,7 @@
 
     // Watchdog: if continuous silence, restart mic
     if (db < -85) { silenceFrames++; } else { silenceFrames = 0; }
-    if (silenceFrames > 120) { // ~2 seconds @ 60fps
-      silenceFrames = 0;
-      restartMic("silence watchdog");
-    }
+    if (silenceFrames > 120) { silenceFrames = 0; restartMic("silence watchdog"); }
 
     // Pitch
     const freq = autoCorrelate(timeData, audioCtx.sampleRate);
@@ -486,7 +489,7 @@
     // Follow
     const gatedActive = db > parseFloat(gateEl.value);
     const shouldFollow = autoFollowEl.checked && !testMode;
-    const confidence = (stableCount >= 6) && gatedActive; // slightly easier than before
+    const confidence = (stableCount >= 6) && gatedActive;
     if (shouldFollow && confidence) {
       setTargetsFromDetection(peaks.length ? peaks : (freq? [freq] : []));
       synthLed.classList.add('on');
@@ -608,7 +611,49 @@
   function valNoise1D(p){ const n=noise.length; const i0=Math.floor(p)%n, i1=(i0+1)%n; const t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; }
   function fbmNoise(x,y,z){ let total=0, amp=0.6, freq=1.0; for (let o=0;o<4;o++){ const s = valNoise1D(x*freq + y*freq*1.37 + z*freq*0.77); total += s*amp; amp*=0.5; freq*=2.1; } return total; }
 
-  // ===== UI bindings =====
+  // ===== UI & Buttons =====
+  startBtn.addEventListener('click', start);
+
+  resumeBtn.addEventListener('click', async ()=>{
+    await ensureRunningGraph();
+    await restartMic("manual");
+  });
+
+  beepBtn.addEventListener('click', async ()=>{
+    await ensureRunningGraph();
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    g.gain.value = 0.2;
+    osc.type = 'sine';
+    osc.frequency.value = 440;
+    osc.connect(g).connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    osc.start(now);
+    osc.stop(now + 1.0);
+  });
+
+  testBtn.addEventListener('click', async ()=>{
+    await ensureRunningGraph();
+    testMode = !testMode;
+    testBtn.textContent = testMode ? "Stop Test Drone" : "Test Drone";
+    if (testMode){
+      const a = 440, e = a * Math.pow(2,7/12);
+      holdEl.checked = true;
+      setDroneTargets([a, e]);
+      synthLed.classList.add('on');
+    } else {
+      holdEl.checked = false;
+      setDroneTargets([]);
+      synthLed.classList.remove('on');
+    }
+  });
+
+  monitorMicEl.addEventListener('change', ()=>{
+    if (!monitorGain) return;
+    monitorGain.gain.value = monitorMicEl.checked ? 0.05 : 0.0; // very low level
+  });
+
+  // Sliders
   micGainEl.addEventListener('input', e=>{ micGainVal.textContent=(+e.target.value).toFixed(2); if(micGain) micGain.gain.value=parseFloat(e.target.value); });
   preampEl .addEventListener('input', e=>{ const db=parseFloat(e.target.value); preampVal.textContent=`+${db} dB`; if(preamp) preamp.gain.value=dbToGain(db); });
   gateEl   .addEventListener('input', e=>{ const v=parseFloat(e.target.value); gateVal.textContent=`${v} dBFS`; });
@@ -645,6 +690,11 @@
     canvas.height = Math.floor(420 * ratio);
   }
   resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+  // ===== Visuals helpers =====
+  function makeValueNoise(n){ const a = new Float32Array(n); for (let i=0;i<n;i++) a[i]=Math.random(); return a; }
+  function valNoise1D(p){ const n=noise.length; const i0=Math.floor(p)%n, i1=(i0+1)%n; const t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; }
+  function fbmNoise(x,y,z){ let total=0, amp=0.6, freq=1.0; for (let o=0;o<4;o++){ const s = valNoise1D(x*freq + y*freq*1.37 + z*freq*0.77); total += s*amp; amp*=0.5; freq*=2.1; } return total; }
 
 })();
 </script>
