@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Misty Drone — Dream Organ (Feature Build v1.1)</title>
+<title>Misty Drone — Dream Organ (Feature Build v1.2)</title>
 <style>
   :root { --bg:#0b0f14; --text:#e9f1f7; --muted:#94a3b8; --accent:#67d4ff; --accent2:#b486ff; --good:#69e089; --warn:#ffcc66; --bad:#ff6b6b; }
   html,body{height:100%;margin:0;background:
@@ -33,7 +33,10 @@
   input[type="range"]{width:100%;accent-color:#7ed3ff;}
   .chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px;}
   .note{font-size:26px;font-weight:700}
-  #mist{width:100%;height:420px;border-radius:14px;display:block;background:#0b0f14;} /* solid dark base to avoid 'white box' */
+  #mist{width:100%;height:420px;border-radius:14px;display:block;background:#0b0f14;}
+  .toggles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:8px}
+  @media (max-width:980px){.toggles{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  .toggle{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--muted);}
   details.debug summary{cursor:pointer; color:var(--muted); user-select:none;}
   details.debug{margin-top:10px}
 </style>
@@ -43,15 +46,13 @@
   <header>
     <div class="row">
       <h1>Misty Drone</h1>
-      <span class="pill">dreamy organ — feature build v1.1</span>
+      <span class="pill">dreamy organ — feature build v1.2</span>
     </div>
     <div class="row">
       <button id="startBtn" class="btn">Start Audio</button>
       <label class="row" style="gap:6px;"><input id="fxOn" type="checkbox"><span class="state">FX On</span></label>
       <label class="row" style="gap:6px;"><input id="autoFollow" type="checkbox" checked><span class="state">Auto-Follow Mic</span></label>
-      <label class="row" style="gap:6px;"><input id="h5" type="checkbox" checked><span class="state">+5th</span></label>
-      <label class="row" style="gap:6px;"><input id="h9" type="checkbox"><span class="state">+9th</span></label>
-      <!-- NEW: Freeze/Release -->
+      <!-- Freeze/Release -->
       <button id="freezeBtn" class="btn secondary" title="Hold current notes">Freeze</button>
       <button id="releaseBtn" class="btn secondary" title="Release held notes">Release</button>
     </div>
@@ -72,7 +73,25 @@
         <div class="control"><label>Tone (LPF) <span id="toneVal">1800 Hz</span></label><input id="tone" type="range" min="300" max="6000" step="10" value="1800"/></div>
         <div class="control"><label>Chorus Width <span id="chorusVal">0.35</span></label><input id="chorus" type="range" min="0" max="1" step="0.01" value="0.35"/></div>
         <div class="control"><label>Reverb Mix <span id="reverbVal">0.25</span></label><input id="reverb" type="range" min="0" max="0.9" step="0.01" value="0.25"/></div>
+        <div class="control" style="grid-column:1/-1;">
+          <label>Harmony (combine freely)</label>
+          <div class="toggles">
+            <label class="toggle"><input id="h_m3" type="checkbox"> m3</label>
+            <label class="toggle"><input id="h_M3" type="checkbox"> M3</label>
+            <label class="toggle"><input id="h_P4" type="checkbox"> P4</label>
+            <label class="toggle"><input id="h_P5" type="checkbox" checked> P5</label>
+            <label class="toggle"><input id="h_M6" type="checkbox"> M6</label>
+            <label class="toggle"><input id="h_m7" type="checkbox"> m7</label>
+            <label class="toggle"><input id="h_M7" type="checkbox"> M7</label>
+            <label class="toggle"><input id="h_9"  type="checkbox"> 9th</label>
+            <label class="toggle"><input id="h_11" type="checkbox"> 11th</label>
+            <label class="toggle"><input id="h_13" type="checkbox"> 13th</label>
+            <label class="toggle"><input id="h_octU" type="checkbox"> +8ve</label>
+            <label class="toggle"><input id="h_octD" type="checkbox"> −8ve</label>
+          </div>
+        </div>
       </div>
+
       <details class="debug">
         <summary>Debug tools</summary>
         <div class="row" style="margin-top:8px;">
@@ -119,7 +138,7 @@
   const dbToGain=db=>Math.pow(10, db/20);
   const rmsToDbfs=rms=>20*Math.log10(rms || 1e-12);
   const noteNameOf=f=>{ if(!f||!isFinite(f)||f<=0) return "—"; const n=Math.round(12*Math.log2(f/A4))+69; return NOTE_NAMES[(n%12+12)%12]+(Math.floor(n/12)-1); };
-  const LS_KEY='misty-drone-v1.1';
+  const LS_KEY='misty-drone-v1.2';
 
   // ===== DOM =====
   const $=id=>document.getElementById(id);
@@ -131,20 +150,23 @@
   const micGainEl=$("micGain"), preampEl=$("preamp"), gateEl=$("gate"), micGainVal=$("micGainVal"), preampVal=$("preampVal"), gateVal=$("gateVal");
   const inMeter=$("inMeter"), mctx=inMeter.getContext("2d"), inDbEl=$("inDb");
   const noteEl=$("noteName"), hzEl=$("hz");
-  const autoFollowEl=$("autoFollow"), h5El=$("h5"), h9El=$("h9");
+  const autoFollowEl=$("autoFollow");
   const freezeBtn=$("freezeBtn"), releaseBtn=$("releaseBtn");
   const canvas=$("mist"), vctx=canvas.getContext("2d");
 
+  // Harmony toggles
+  const H = {
+    m3: $("h_m3"), M3: $("h_M3"), P4: $("h_P4"), P5: $("h_P5"),
+    M6: $("h_M6"), m7: $("h_m7"), M7: $("h_M7"), _9: $("h_9"),
+    _11: $("h_11"), _13: $("h_13"), octU: $("h_octU"), octD: $("h_octD"),
+  };
+
   // ===== Audio state =====
   let audioCtx;
-  // Organ path
   let envGain, outGain, limiter;
   let lpf, d1, d2, lfo1, lfo2, lfoG1, lfoG2, dryMix, revSend, convolver, revRet, revMix, fxOut;
-  // Mic path
   let micStream, micSource, micGain, preamp, comp, analyser, timeData;
-  // Analysis state
   let lastStableFreq=0, stableCount=0, envVis=0;
-  // Voices
   let voices=[];
 
   // Freeze state
@@ -157,7 +179,8 @@
       volume:+volumeEl.value, attack:+attackEl.value, release:+releaseEl.value, tone:+toneEl.value,
       chorus:+chorusEl.value, reverb:+reverbEl.value, fxOn:fxOnEl.checked,
       micGain:+micGainEl.value, preamp:+preampEl.value, gate:+gateEl.value,
-      autoFollow:autoFollowEl.checked, h5:h5El.checked, h9:h9El.checked
+      autoFollow:autoFollowEl.checked,
+      harm: Object.fromEntries(Object.entries(H).map(([k,el])=>[k, el.checked]))
     };
     localStorage.setItem(LS_KEY, JSON.stringify(data));
   }
@@ -170,8 +193,9 @@
         if (el) el.value=v;
         if (k==='fxOn') fxOnEl.checked=v;
         if (k==='autoFollow') autoFollowEl.checked=v;
-        if (k==='h5') h5El.checked=v;
-        if (k==='h9') h9El.checked=v;
+        if (k==='harm' && typeof v==='object'){
+          for (const [hk,hv] of Object.entries(v)){ if (H[hk]) H[hk].checked = hv; }
+        }
       }
     }catch{}
     volVal.textContent=(+volumeEl.value).toFixed(2);
@@ -192,18 +216,14 @@
     audioCtx = new (window.AudioContext||window.webkitAudioContext)({ latencyHint:"interactive" });
     updateCtxState();
 
-    // Core buses
-    envGain = audioCtx.createGain(); envGain.gain.value=0.0001; // non-zero to avoid Safari ramp quirks
+    envGain = audioCtx.createGain(); envGain.gain.value=0.0001;
     outGain = audioCtx.createGain(); outGain.gain.value=parseFloat(volumeEl.value);
 
-    // Output soft limiter
     limiter = audioCtx.createDynamicsCompressor();
     limiter.threshold.value=-3; limiter.knee.value=6; limiter.ratio.value=4; limiter.attack.value=0.003; limiter.release.value=0.25;
 
-    // Simple path: env -> out -> limiter -> destination
     envGain.connect(outGain).connect(limiter).connect(audioCtx.destination);
 
-    // FX path
     lpf = audioCtx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=parseFloat(toneEl.value); lpf.Q.value=0.5;
     d1 = audioCtx.createDelay(); d2 = audioCtx.createDelay(); d1.delayTime.value=0.012; d2.delayTime.value=0.018;
     lfo1 = audioCtx.createOscillator(); lfo2 = audioCtx.createOscillator(); lfoG1 = audioCtx.createGain(); lfoG2 = audioCtx.createGain();
@@ -224,8 +244,6 @@
     fxOut.connect(outGain);
 
     setFxActive(fxOnEl.checked);
-
-    // Kick visuals (draw loop already running; this just ensures audio-linked values exist)
   }
 
   function setFxActive(on){
@@ -264,7 +282,6 @@
     if (!audioCtx) return;
     const now=audioCtx.currentTime;
     voices.forEach(v=>v._used=false);
-
     freqs.forEach(f=>{
       let v=voices.find(v=>Math.abs(v.freq - f) < 0.5);
       if(!v){ v=makeVoice(f); voices.push(v); }
@@ -275,7 +292,6 @@
       v.vGain.gain.setValueAtTime(Math.max(v.vGain.gain.value, 0.0001), now);
       v.vGain.gain.setTargetAtTime(v.level, now, Math.max(0.02, parseFloat(attackEl.value))*0.6);
     });
-
     for(let i=voices.length-1;i>=0;i--){
       const v=voices[i]; if(!v._used){
         v.vGain.gain.cancelScheduledValues(now);
@@ -285,15 +301,26 @@
         voices.splice(i,1);
       }
     }
-
     if (freqs.length) openEnv(); else closeEnv();
   }
 
+  // Build harmony list based on toggles
+  function semitone(n){ return Math.pow(2, n/12); }
   function applyHarmony(rootHz){
-    const out=[rootHz];
-    if (h5El.checked) out.push(rootHz*Math.pow(2,7/12));
-    if (h9El.checked) out.push(rootHz*Math.pow(2,14/12));
-    return out;
+    const freqs = new Set([rootHz]);
+    if (H.m3.checked) freqs.add(rootHz * semitone(3));
+    if (H.M3.checked) freqs.add(rootHz * semitone(4));
+    if (H.P4.checked) freqs.add(rootHz * semitone(5));
+    if (H.P5.checked) freqs.add(rootHz * semitone(7));
+    if (H.M6.checked) freqs.add(rootHz * semitone(9));
+    if (H.m7.checked) freqs.add(rootHz * semitone(10));
+    if (H.M7.checked) freqs.add(rootHz * semitone(11));
+    if (H._9.checked)  freqs.add(rootHz * semitone(14));
+    if (H._11.checked) freqs.add(rootHz * semitone(17));
+    if (H._13.checked) freqs.add(rootHz * semitone(21));
+    if (H.octU.checked) freqs.add(rootHz * semitone(12));
+    if (H.octD.checked) freqs.add(rootHz * semitone(-12));
+    return Array.from(freqs).sort((a,b)=>a-b);
   }
 
   // ===== Mic (optional) =====
@@ -338,7 +365,6 @@
     noteEl.textContent = f ? noteNameOf(f) : '—';
     hzEl.textContent   = f ? `${f.toFixed(1)} Hz` : '— Hz';
 
-    // Follow only if not frozen
     if (!holdFrozen && autoFollowEl.checked){
       if (f && stableCount>=6){
         setDrone(applyHarmony(quantizeToET(f)));
@@ -346,7 +372,6 @@
         setDrone([]);
       }
     }
-
     requestAnimationFrame(analyse);
   }
 
@@ -384,12 +409,9 @@
 
   // ===== Freeze / Release =====
   freezeBtn.onclick = ()=>{
-    // choose what's sounding; else last stable detection (quantized with harmony)
-    let targets = voices.length
-      ? voices.map(v=>v.freq)
+    let targets = voices.length ? voices.map(v=>v.freq)
       : (lastStableFreq>0 ? applyHarmony(quantizeToET(lastStableFreq)) : []);
-
-    if (!targets.length) return; // nothing to freeze
+    if (!targets.length) return;
     frozenTargets = targets.slice();
     holdFrozen = true;
     setDrone(frozenTargets);
@@ -398,14 +420,15 @@
   releaseBtn.onclick = ()=>{
     holdFrozen = false;
     frozenTargets = [];
-    setDrone([]); // envelope will close; analyse() resumes follow next tick
+    setDrone([]);
     freezeBtn.classList.remove('toggled');
   };
 
-  // ===== UI bindings + persistence =====
+  // ===== UI + persistence =====
   startBtn.onclick = async ()=>{ await startAudio(); };
   fxOnEl.onchange = ()=>{ setFxActive(fxOnEl.checked); saveSettings(); };
-  autoFollowEl.onchange = saveSettings; h5El.onchange=saveSettings; h9El.onchange=saveSettings;
+  autoFollowEl.onchange = saveSettings;
+  Object.values(H).forEach(el=> el.addEventListener('change', saveSettings));
 
   volumeEl.oninput = e=>{ volVal.textContent=(+e.target.value).toFixed(2); if(outGain) outGain.gain.value=parseFloat(e.target.value); saveSettings(); };
   attackEl.oninput = e=>{ attackVal.textContent=(+e.target.value).toFixed(2)+'s'; saveSettings(); };
@@ -421,29 +444,38 @@
   function updateCtxState(){ ctxStateEl.textContent = audioCtx ? audioCtx.state : "—"; }
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && audioCtx && audioCtx.state!=='running'){ audioCtx.resume().then(updateCtxState); } });
 
-  // ===== Visualiser (fixed) =====
-  // Draws continuously, even before audio starts. Uses envelope when available,
-  // plus a subtle idle pulse so it never looks “stuck”.
+  // ===== Visualiser + ASCII cat =====
   const noise=(n=>{ const a=new Float32Array(n); for(let i=0;i<n;i++) a[i]=Math.random(); return a; })(256);
   const vn1=p=>{ const n=noise.length,i0=Math.floor(p)%n,i1=(i0+1)%n,t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; };
   const fbm=(x,y,z)=>{ let tot=0,amp=0.6,f=1; for(let o=0;o<4;o++){ const s=vn1(x*f+y*f*1.37+z*f*0.77); tot+=s*amp; amp*=0.5; f*=2.1; } return tot; };
 
+  const catFrames = [
+`  /\\_/\\
+ ( o.o )
+  > ^ <`,
+`  /\\_/\\
+ ( -.- )
+  > ^ <`,
+`  /\\_/\\
+ ( o.o )
+  > v <`
+  ];
+  let catIndex=0, catTimer=0;
+
   function draw(){
-    // Ensure canvas is properly sized to devicePixelRatio
     const rect=canvas.getBoundingClientRect(), ratio=window.devicePixelRatio||1;
     const wantW=Math.floor(rect.width*ratio), wantH=Math.floor(420*ratio);
     if (canvas.width!==wantW || canvas.height!==wantH){ canvas.width=wantW; canvas.height=wantH; }
-
-    // Envelope visual (fallback to idle pulse if audio not started)
     const t=performance.now();
-    const idle = 0.12 + 0.08*Math.sin(t*0.0013); // gentle breathing when silent
+
+    const idle = 0.12 + 0.08*Math.sin(t*0.0013);
     const env = (audioCtx && envGain) ? envGain.gain.value : 0;
     envVis = envVis*0.9 + (env||0)*0.1;
     const intensity = clamp(envVis + idle*(1-envVis), 0, 1);
 
-    // Background fade (darker to avoid white look)
+    // Background fade
     vctx.globalCompositeOperation='source-over';
-    vctx.fillStyle='rgba(6,10,15,0.2)';
+    vctx.fillStyle='rgba(6,10,15,0.22)';
     vctx.fillRect(0,0,canvas.width,canvas.height);
 
     // Mist layers
@@ -463,18 +495,49 @@
         }
       }
     }
+
+    // ASCII Cat — slow dance/bob with envelope
+    catTimer += 1;
+    const framePeriod = 40 + Math.floor(40*(1-intensity)); // slower when quiet
+    if (catTimer >= framePeriod){ catTimer=0; catIndex=(catIndex+1)%catFrames.length; }
+    const cat = catFrames[catIndex].split("\n");
+
+    vctx.globalAlpha = 0.85;
+    vctx.globalCompositeOperation='source-over';
+    vctx.textAlign='center';
+    const px = Math.round(14 * ratio);
+    vctx.font = `${px}px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`;
+    // bobbing offset
+    const bob = Math.sin(t*0.002 + intensity*2.0) * (6*ratio) * (0.4+0.6*intensity);
+    const cx = Math.floor(canvas.width/2);
+    const cy = Math.floor(canvas.height*0.75 + bob);
+
+    // shadow glow
+    vctx.fillStyle = `rgba(103,212,255,${0.15+0.25*intensity})`;
+    cat.forEach((line,i)=>{ vctx.fillText(line, cx+1, cy + i*px*1.1 + 1); });
+
+    // main text
+    vctx.fillStyle = `rgba(233,241,247,${0.8})`;
+    cat.forEach((line,i)=>{ vctx.fillText(line, cx, cy + i*px*1.1); });
+
     vctx.globalAlpha=1;
     requestAnimationFrame(draw);
   }
   requestAnimationFrame(draw);
 
-  // Meter
   function drawMeter(db){
     const w=inMeter.width,h=inMeter.height; mctx.clearRect(0,0,w,h);
     const n=Math.max(0,Math.min(1,(db+90)/90));
     mctx.fillStyle='rgba(255,255,255,.06)'; mctx.fillRect(0,0,w,h);
     mctx.fillStyle = n>0.95?'#ff6b6b':(n>0.8?'#ffcc66':'#69e089');
     mctx.fillRect(0,0,Math.floor(w*n),h);
+  }
+
+  // ===== IR helper =====
+  function buildIR(ctx,dur=2.2,decay=0.4){
+    const rate=ctx.sampleRate, len=Math.floor(rate*dur), buf=ctx.createBuffer(2,len,rate);
+    for(let ch=0; ch<2; ch++){ const d=buf.getChannelData(ch); for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay*3); } }
+    return buf;
   }
 
 })();
