@@ -3,401 +3,325 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Misty Drone — Dream Organ (Mic-optional build)</title>
+<title>Misty Drone — Minimal, Mic-optional, Hardened</title>
 <style>
-  :root { --bg:#0b0f14; --panel:#121823; --muted:#8aa0b2; --text:#e9f1f7; --accent:#67d4ff; --accent-2:#b486ff; --good:#69e089; --warn:#ffcc66; --bad:#ff6b6b; }
-  html,body{height:100%;background:
+  :root { --bg:#0b0f14; --text:#e9f1f7; --muted:#94a3b8; --accent:#67d4ff; --accent2:#b486ff; --good:#69e089; --warn:#ffcc66; --bad:#ff6b6b; }
+  html,body{height:100%;margin:0;background:
     radial-gradient(1200px 700px at 70% -10%, rgba(103,212,255,.06), transparent 60%),
     radial-gradient(900px 600px at -10% 120%, rgba(180,134,255,.07), transparent 60%),
-    var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial; }
+    var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; }
   .wrap{max-width:1100px;margin:24px auto;padding:16px;}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
-  h1{font-weight:700;font-size:20px;letter-spacing:.6px;margin:0;}
-  .pill{background:linear-gradient(135deg,rgba(103,212,255,.2),rgba(180,134,255,.2));border:1px solid rgba(103,212,255,.3);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.4px;}
+  .pill{padding:6px 10px;border-radius:999px;background:linear-gradient(135deg,rgba(103,212,255,.18),rgba(180,134,255,.18));border:1px solid rgba(255,255,255,.12);color:var(--muted);font-size:12px;}
+  .btn{appearance:none;border:0;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;color:#0b0f14;
+       background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(103,212,255,.25), inset 0 1px 0 rgba(255,255,255,.3);}
+  .btn.secondary{background:rgba(255,255,255,.08); color:var(--text); border:1px solid rgba(255,255,255,.14); box-shadow:none;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .state{font-size:12px;color:var(--muted);}
   .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);}
-  .badge.ok{border-color:rgba(105,224,137,.4); background:rgba(105,224,137,.12);}
-  .badge.err{border-color:rgba(255,107,107,.4); background:rgba(255,107,107,.12);}
-  .grid{display:grid;gap:16px;grid-template-columns:1.2fr 1fr;}
+  .ok{border-color:rgba(105,224,137,.4); background:rgba(105,224,137,.12);}
+  .err{border-color:rgba(255,107,107,.4); background:rgba(255,107,107,.12);}
+  .grid{display:grid;gap:16px;grid-template-columns:1.1fr 1fr;}
   @media (max-width:980px){.grid{grid-template-columns:1fr;}}
-  .panel{background:linear-gradient(180deg,rgba(255,255,255,.01),rgba(255,255,255,0));border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);padding:14px;}
-  .panel h2{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;letter-spacing:.4px;}
+  .panel{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));}
+  .panel h2{margin:0 0 10px;font-size:14px;color:var(--muted);letter-spacing:.3px;}
   .controls{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));}
-  .row{display:grid;gap:8px;background:rgba(255,255,255,.02);border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,.05);}
-  label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline;}
-  input[type="range"]{width:100%;accent-color:var(--accent);}
-  .toggles{display:flex;flex-wrap:wrap;gap:10px;}
-  .toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);user-select:none;}
-  .readouts{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px;}
-  @media (max-width:700px){.readouts{grid-template-columns:1fr;}}
-  .chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px;min-height:48px;}
-  .chip strong{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;}
-  .note{font-size:28px;font-weight:700;letter-spacing:1px;}
-  .hz{font-size:12px;color:var(--muted);}
-  .btn{appearance:none;border:0;padding:10px 14px;border-radius:12px;color:var(--bg);
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));font-weight:700;box-shadow:0 10px 25px rgba(103,212,255,.25),inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;}
-  .btn.secondary{background:rgba(255,255,255,.08);color:var(--text);box-shadow:none;border:1px solid rgba(255,255,255,.15);}
-  .btn:disabled{opacity:.6;cursor:not-allowed;}
-  .led{display:inline-block;width:10px;height:10px;border-radius:50%;background:#444;margin-left:8px;box-shadow:0 0 0 2px rgba(255,255,255,.03) inset;}
-  .led.on{background:var(--good);box-shadow:0 0 12px var(--good);}
-  canvas#mist{width:100%;height:420px;display:block;border-radius:14px;background:
-      radial-gradient(600px 300px at 50% 10%, rgba(255,255,255,.02), transparent 70%), transparent; filter:blur(.3px);}
-  footer{margin-top:16px;color:var(--muted);font-size:12px;text-align:center;}
+  .control{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);padding:10px;border-radius:12px;}
+  .control label{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:6px;}
+  input[type="range"]{width:100%;accent-color:#7ed3ff;}
+  .chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px;}
+  .note{font-size:26px;font-weight:700}
+  #mist{width:100%;height:420px;border-radius:14px;background:radial-gradient(600px 300px at 50% 10%, rgba(255,255,255,.03), transparent 70%);display:block}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Misty Drone <span class="pill">mic-aware dreamy organ</span></h1>
-    <div class="actions">
-      <button id="startBtn"  class="btn">Start Audio</button>
-      <button id="enableMicBtn" class="btn secondary" title="Ask for mic access">Enable Mic</button>
-      <button id="beepBtn"   class="btn secondary" title="Direct 440 Hz for 1s">Beep 1s</button>
-      <button id="testBtn"   class="btn secondary" title="Pad regardless of mic">Test Drone</button>
-      <label class="toggle"><input id="bypassFx" type="checkbox"> Bypass FX</label>
-      <div class="state">AudioContext: <span id="ctxState">—</span> • <span id="micStatus" class="badge">Mic: —</span></div>
+    <div class="row">
+      <h1>Misty Drone</h1>
+      <span class="pill">dreamy organ — minimal build</span>
+    </div>
+    <div class="row">
+      <button id="startBtn" class="btn">Start Audio</button>
+      <button id="beepBtn" class="btn secondary">Beep 1s</button>
+      <button id="testDirectBtn" class="btn secondary">Test Drone (Direct)</button>
+      <button id="testOrganBtn" class="btn secondary">Test Drone (Organ Path)</button>
+      <label class="row" style="gap:6px;"><input id="fxOn" type="checkbox"><span class="state">FX On</span></label>
+    </div>
+    <div class="row">
+      <button id="enableMicBtn" class="btn secondary">Enable Mic</button>
+      <span class="state">AudioContext: <span id="ctxState">—</span></span>
+      <span id="micStatus" class="badge">Mic: —</span>
     </div>
   </header>
 
   <div class="grid">
     <section class="panel">
-      <h2>Controls</h2>
+      <h2>Organ Controls</h2>
       <div class="controls">
-        <div class="row"><label>Master Volume <span><span id="volVal">0.70</span></span></label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.70" /></div>
-        <div class="row"><label>Swell (Attack) <span><span id="attackVal">0.80s</span></span></label><input id="attack" type="range" min="0" max="3" step="0.01" value="0.80" /></div>
-        <div class="row"><label>Sustain (Release) <span><span id="releaseVal">2.50s</span></span></label><input id="release" type="range" min="0.1" max="6" step="0.05" value="2.5" /></div>
-        <div class="row"><label>Tone (Low-pass) <span><span id="toneVal">1800 Hz</span></span></label><input id="tone" type="range" min="300" max="6000" step="10" value="1800" /></div>
-        <div class="row"><label>Chorus Width <span><span id="chorusVal">0.35</span></span></label><input id="chorus" type="range" min="0" max="1" step="0.01" value="0.35" /></div>
-        <div class="row"><label>Reverb Mix <span><span id="reverbVal">0.25</span></span></label><input id="reverb" type="range" min="0" max="0.9" step="0.01" value="0.25" /></div>
-
-        <!-- Mic-specific controls (safe to leave; do nothing if mic is off) -->
-        <div class="row"><label>Input Gain <span><span id="micGainVal">1.00</span></span></label><input id="micGain" type="range" min="0" max="3" step="0.01" value="1.0" /></div>
-        <div class="row"><label>Preamp Boost <span><span id="preampVal">+0 dB</span></span></label><input id="preamp" type="range" min="0" max="30" step="1" value="0" /></div>
-        <div class="row"><label>Input Gate <span><span id="gateVal">-60 dBFS</span></span></label><input id="gate" type="range" min="-90" max="-30" step="1" value="-60" /></div>
-      </div>
-
-      <div class="toggles" style="margin-top:12px;">
-        <label class="toggle"><input id="autoFollow" type="checkbox" checked> Auto-Follow</label>
-        <label class="toggle"><input id="hold" type="checkbox"> Hold Drone</label>
-        <label class="toggle"><input id="harmUseDetected" type="checkbox" checked> Use Detected Notes</label>
-        <label class="toggle"><input id="harmStack" type="checkbox"> Add 5th + 9th</label>
-      </div>
-
-      <div class="readouts">
-        <div class="chip"><strong>Dominant Pitch</strong><div class="note" id="noteName">—</div><div class="hz" id="hz">— Hz</div></div>
-        <div class="chip"><strong>Detected Notes (peaks)</strong><div id="multiNotes" style="font-size:16px;line-height:1.35;">—</div><div class="hz" id="stability">stability: —</div></div>
-        <div class="chip"><strong>Input Level</strong><div style="display:flex;align-items:center;gap:10px;"><canvas id="inMeter" width="280" height="14" style="border-radius:8px;background:rgba(255,255,255,.04);width:100%;height:14px;"></canvas><span id="inDb" class="hz">mic off</span></div></div>
+        <div class="control"><label>Master Volume <span id="volVal">0.80</span></label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.80"/></div>
+        <div class="control"><label>Attack <span id="attackVal">0.80s</span></label><input id="attack" type="range" min="0" max="3" step="0.01" value="0.80"/></div>
+        <div class="control"><label>Release <span id="releaseVal">2.50s</span></label><input id="release" type="range" min="0.1" max="6" step="0.05" value="2.5"/></div>
+        <div class="control"><label>Tone (LPF) <span id="toneVal">1800 Hz</span></label><input id="tone" type="range" min="300" max="6000" step="10" value="1800"/></div>
+        <div class="control"><label>Chorus Width <span id="chorusVal">0.35</span></label><input id="chorus" type="range" min="0" max="1" step="0.01" value="0.35"/></div>
+        <div class="control"><label>Reverb Mix <span id="reverbVal">0.25</span></label><input id="reverb" type="range" min="0" max="0.9" step="0.01" value="0.25"/></div>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Visualizer</h2>
-      <canvas id="mist" width="900" height="450"></canvas>
+      <h2>Mic & Detection</h2>
+      <div class="controls">
+        <div class="control"><label>Input Gain <span id="micGainVal">1.00</span></label><input id="micGain" type="range" min="0" max="3" step="0.01" value="1.0"/></div>
+        <div class="control"><label>Preamp Boost <span id="preampVal">+0 dB</span></label><input id="preamp" type="range" min="0" max="30" step="1" value="0"/></div>
+        <div class="control"><label>Input Gate <span id="gateVal">-60 dBFS</span></label><input id="gate" type="range" min="-90" max="-30" step="1" value="-60"/></div>
+      </div>
+      <div class="controls" style="grid-template-columns:1fr;">
+        <div class="chip">
+          <div class="row" style="justify-content:space-between"><div>Input Level</div><div id="inDb">mic off</div></div>
+          <canvas id="inMeter" width="300" height="12" style="width:100%;height:12px;border-radius:8px;background:rgba(255,255,255,.05)"></canvas>
+        </div>
+        <div class="chip"><div>Dominant Pitch</div><div class="note" id="noteName">—</div><div id="hz" class="state">— Hz</div></div>
+      </div>
     </section>
   </div>
 
-  <footer>Tip: if mic is blocked, click “Enable Mic” and allow it in the browser prompt/site settings. HTTPS is required.</footer>
+  <section class="panel" style="margin-top:16px">
+    <h2>Visualizer</h2>
+    <canvas id="mist" width="900" height="450"></canvas>
+  </section>
 </div>
 
 <script>
 (function(){
-  // === Utils ===
+  // ===== Utilities =====
   const A4=440, NOTE_NAMES=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-  const dbToGain=db=>Math.pow(10,db/20);
-  const rmsToDbfs=rms=>20*Math.log10(rms||1e-12);
-  function freqToNoteName(f){ if(!isFinite(f)||f<=0) return "—"; const n=Math.round(12*Math.log2(f/A4))+69; return NOTE_NAMES[(n%12+12)%12]+(Math.floor(n/12)-1); }
+  const dbToGain=db=>Math.pow(10, db/20);
+  const rmsToDbfs=rms=>20*Math.log10(rms || 1e-12);
+  const noteNameOf=f=>{ if(!f||!isFinite(f)||f<=0) return "—"; const n=Math.round(12*Math.log2(f/A4))+69; return NOTE_NAMES[(n%12+12)%12]+(Math.floor(n/12)-1); };
 
-  // === DOM ===
+  // ===== DOM =====
   const $=id=>document.getElementById(id);
-  const startBtn=$("startBtn"), enableMicBtn=$("enableMicBtn"), beepBtn=$("beepBtn"), testBtn=$("testBtn"), bypassFxEl=$("bypassFx");
+  const startBtn=$("startBtn"), enableMicBtn=$("enableMicBtn");
+  const beepBtn=$("beepBtn"), testDirectBtn=$("testDirectBtn"), testOrganBtn=$("testOrganBtn");
   const ctxStateEl=$("ctxState"), micStatusEl=$("micStatus");
-  const volumeEl=$("volume"), attackEl=$("attack"), releaseEl=$("release"), toneEl=$("tone"), chorusEl=$("chorus"), reverbEl=$("reverb");
+  const volumeEl=$("volume"), attackEl=$("attack"), releaseEl=$("release"), toneEl=$("tone"), chorusEl=$("chorus"), reverbEl=$("reverb"), fxOnEl=$("fxOn");
   const volVal=$("volVal"), attackVal=$("attackVal"), releaseVal=$("releaseVal"), toneVal=$("toneVal"), chorusVal=$("chorusVal"), reverbVal=$("reverbVal");
   const micGainEl=$("micGain"), preampEl=$("preamp"), gateEl=$("gate"), micGainVal=$("micGainVal"), preampVal=$("preampVal"), gateVal=$("gateVal");
-  const noteName=$("noteName"), hzReadout=$("hz"), multiNotes=$("multiNotes"), stabilityEl=$("stability");
   const inMeter=$("inMeter"), mctx=inMeter.getContext("2d"), inDbEl=$("inDb");
-  const autoFollowEl=$("autoFollow"), holdEl=$("hold"), harmUseDetectedEl=$("harmUseDetected"), harmStackEl=$("harmStack");
-  const canvas=$("mist"), ctx=canvas.getContext("2d");
+  const noteEl=$("noteName"), hzEl=$("hz");
+  const canvas=$("mist"), vctx=canvas.getContext("2d");
 
-  // === Audio state ===
+  // ===== Audio state =====
   let audioCtx;
-  // output/synth nodes (always init)
-  let envGain, lpFilter, chorusDelay1, chorusDelay2, reverbSend, convolver, reverbReturn, reverbMix, outGain, master, bypassBus, bypassSwitch, fxSwitch;
-  // mic/analysis nodes (optional)
-  let micStream, micSource, micGain, preamp, comp, analyser, analyserFFT, timeData, freqData;
-  // analysis state
-  let lastStableFreq=0, stableCount=0, currentEnvLevel=0, silenceFrames=0;
-  // voices
-  let droneVoices=[];
+  // Organ core
+  let envGain, outGain;
+  // FX chain (built once, used only if fxOn)
+  let lpf, d1, d2, lfo1, lfo2, lfoG1, lfoG2, dryMix, revSend, convolver, revRet, revMix, fxOut;
+  // Mic chain (optional)
+  let micStream, micSource, micGain, preamp, comp, analyser, timeData;
 
-  // ===== Output graph (always) =====
+  // ===== Start Audio (organ path always up) =====
   async function startAudio(){
     if (audioCtx) return;
     audioCtx = new (window.AudioContext||window.webkitAudioContext)({ latencyHint:"interactive" });
     updateCtxState();
 
-    // Synth core
-    envGain = audioCtx.createGain(); envGain.gain.value = 0.0;
+    // Core buses
+    envGain = audioCtx.createGain(); envGain.gain.value = 0.0001; // tiny non-zero to avoid zero->target bugs
     outGain = audioCtx.createGain(); outGain.gain.value = parseFloat(volumeEl.value);
-    master  = audioCtx.createGain(); master.gain.value = 1.0;
-    bypassBus = audioCtx.createGain(); bypassBus.gain.value = 1.0;
 
-    // FX path
-    lpFilter = audioCtx.createBiquadFilter(); lpFilter.type="lowpass"; lpFilter.frequency.value=parseFloat(toneEl.value); lpFilter.Q.value=0.5;
-    chorusDelay1 = audioCtx.createDelay(); chorusDelay2 = audioCtx.createDelay();
-    chorusDelay1.delayTime.value=0.012; chorusDelay2.delayTime.value=0.018;
-    const LFO1=audioCtx.createOscillator(), LFO2=audioCtx.createOscillator();
-    const LFOg1=audioCtx.createGain(), LFOg2=audioCtx.createGain();
-    LFO1.frequency.value=0.28; LFO2.frequency.value=0.41; LFOg1.gain.value=0.006; LFOg2.gain.value=0.008;
-    LFO1.connect(LFOg1).connect(chorusDelay1.delayTime); LFO2.connect(LFOg2).connect(chorusDelay2.delayTime);
-    LFO1.start(); LFO2.start();
-    reverbSend=audioCtx.createGain(); reverbSend.gain.value=0.25;
-    convolver=audioCtx.createConvolver(); convolver.buffer=buildIR(audioCtx,2.2,0.4);
-    reverbReturn=audioCtx.createGain(); reverbReturn.gain.value=1.0;
-    reverbMix=audioCtx.createGain(); reverbMix.gain.value=parseFloat(reverbEl.value);
+    // Two parallel routes:
+    // 1) Simple path: env -> out (always connected)
+    envGain.connect(outGain).connect(audioCtx.destination);
 
-    // route: env -> bypass and FX
-    envGain.connect(bypassBus);
-    envGain.connect(lpFilter);
-    const fxMix=audioCtx.createGain(); fxMix.gain.value=1.0;
-    lpFilter.connect(chorusDelay1); lpFilter.connect(chorusDelay2);
-    chorusDelay1.connect(fxMix); chorusDelay2.connect(fxMix);
-    fxMix.connect(reverbSend); reverbSend.connect(convolver); convolver.connect(reverbReturn); reverbReturn.connect(reverbMix);
-    fxMix.connect(master); reverbMix.connect(master);
+    // 2) FX path: env -> LPF -> chorus -> reverb -> out (toggled)
+    lpf = audioCtx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=parseFloat(toneEl.value); lpf.Q.value=0.5;
+    d1 = audioCtx.createDelay(); d2 = audioCtx.createDelay(); d1.delayTime.value=0.012; d2.delayTime.value=0.018;
+    lfo1 = audioCtx.createOscillator(); lfo2 = audioCtx.createOscillator(); lfoG1 = audioCtx.createGain(); lfoG2 = audioCtx.createGain();
+    lfo1.frequency.value=0.28; lfo2.frequency.value=0.41; lfoG1.gain.value=0.006; lfoG2.gain.value=0.008;
+    lfo1.connect(lfoG1).connect(d1.delayTime); lfo2.connect(lfoG2).connect(d2.delayTime); lfo1.start(); lfo2.start();
+    dryMix = audioCtx.createGain(); dryMix.gain.value = 1.0;
+    revSend = audioCtx.createGain(); revSend.gain.value = 0.25;
+    convolver = audioCtx.createConvolver(); convolver.buffer = buildIR(audioCtx, 2.2, 0.4);
+    revRet = audioCtx.createGain(); revRet.gain.value=1.0;
+    revMix = audioCtx.createGain(); revMix.gain.value=parseFloat(reverbEl.value);
+    fxOut = audioCtx.createGain(); fxOut.gain.value = 1.0;
 
-    // switches
-    bypassSwitch=audioCtx.createGain(); fxSwitch=audioCtx.createGain();
-    setBypassGains(bypassFxEl.checked);
-    bypassBus.connect(bypassSwitch).connect(outGain);
-    master.connect(fxSwitch).connect(outGain);
-    outGain.connect(audioCtx.destination);
+    envGain.connect(lpf);
+    lpf.connect(d1); lpf.connect(d2);
+    d1.connect(dryMix); d2.connect(dryMix);
+    dryMix.connect(revSend); revSend.connect(convolver); convolver.connect(revRet); revRet.connect(revMix);
+    dryMix.connect(fxOut); revMix.connect(fxOut);
+    fxOut.connect(outGain);
 
-    // visuals & loop
+    setFxActive(fxOnEl.checked);
+
+    // Visuals
     resizeCanvas(); requestAnimationFrame(draw);
-    requestAnimationFrame(analysisLoop); // will no-op until mic exists
   }
 
-  function setBypassGains(on){
-    if (!bypassSwitch || !fxSwitch) return;
-    const t=audioCtx.currentTime;
-    bypassSwitch.gain.setValueAtTime(on?1:0,t);
-    fxSwitch.gain.setValueAtTime(on?0:1,t);
+  function setFxActive(on){
+    if (!audioCtx) return;
+    // Toggle FX contribution by muting/unmuting fxOut
+    fxOut.gain.setValueAtTime(on ? 1.0 : 0.0, audioCtx.currentTime);
   }
 
-  // ===== Mic graph (optional) =====
-  async function enableMic(){
-    if (!audioCtx){ await startAudio(); }
-    try{
-      if (micStream){ micStream.getTracks().forEach(t=>t.stop()); }
-      micStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }});
-      micStatusEl.textContent="Mic: allowed"; micStatusEl.className="badge ok";
+  // ===== Simple test tones =====
+  beepBtn.onclick = async ()=>{ await startAudio();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain(); g.gain.value=0.2; o.type='sine'; o.frequency.value=440;
+    o.connect(g).connect(audioCtx.destination); const t=audioCtx.currentTime; o.start(t); o.stop(t+1); };
 
-      micSource = audioCtx.createMediaStreamSource(micStream);
-      micGain   = audioCtx.createGain(); micGain.gain.value=parseFloat(micGainEl.value);
-      preamp    = audioCtx.createGain(); preamp.gain.value=dbToGain(parseFloat(preampEl.value));
-      comp      = audioCtx.createDynamicsCompressor();
-      comp.threshold.value=-50; comp.knee.value=24; comp.ratio.value=3; comp.attack.value=0.003; comp.release.value=0.25;
+  testDirectBtn.onclick = async ()=>{ await startAudio();
+    const a=audioCtx.createOscillator(), e=audioCtx.createOscillator(), g=audioCtx.createGain();
+    a.type='sawtooth'; e.type='triangle'; a.frequency.value=440; e.frequency.value=440*Math.pow(2,7/12);
+    g.gain.value=parseFloat(volumeEl.value)*0.25;
+    a.connect(g).connect(audioCtx.destination); e.connect(g).connect(audioCtx.destination);
+    const t=audioCtx.currentTime; a.start(t); e.start(t); a.stop(t+2); e.stop(t+2); };
 
-      analyser  = audioCtx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85;
-      analyserFFT=audioCtx.createAnalyser(); analyserFFT.fftSize=4096; analyserFFT.smoothingTimeConstant=0.7;
-      timeData = new Float32Array(analyser.fftSize);
-      freqData = new Float32Array(analyserFFT.frequencyBinCount);
-
-      micSource.connect(micGain); micGain.connect(preamp); preamp.connect(comp);
-      comp.connect(analyser); comp.connect(analyserFFT);
-
-      // keep graph alive silently
-      const keepAlive=audioCtx.createGain(); keepAlive.gain.value=0.0; comp.connect(keepAlive).connect(audioCtx.destination);
-
-      // if loop wasn't running, kick it
-      requestAnimationFrame(analysisLoop);
-    }catch(err){
-      console.warn("getUserMedia failed:", err);
-      micStatusEl.textContent="Mic: blocked"; micStatusEl.className="badge err";
-      inDbEl.textContent="mic off";
-      // keep app usable (synth still works)
-    }
+  // ===== Organ voices (through envGain) =====
+  let voices=[];
+  function makeVoice(freq){
+    const osc1=audioCtx.createOscillator(), osc2=audioCtx.createOscillator();
+    const vGain=audioCtx.createGain(); vGain.gain.value=0.0001; // start tiny
+    const vf=audioCtx.createBiquadFilter(); vf.type='lowpass'; vf.frequency.value=parseFloat(toneEl.value);
+    const lfo=audioCtx.createOscillator(), lg=audioCtx.createGain(); lfo.frequency.value=0.12+Math.random()*0.08; lg.gain.value=4+Math.random()*4; lfo.connect(lg).connect(osc2.detune);
+    osc1.type='sawtooth'; osc2.type='triangle'; osc1.frequency.value=freq*0.995; osc2.frequency.value=freq*1.005;
+    osc1.connect(vGain); osc2.connect(vGain); vGain.connect(vf).connect(envGain);
+    const now=audioCtx.currentTime; osc1.start(now); osc2.start(now); lfo.start(now);
+    const level = 0.25 / Math.sqrt(1 + voices.length);
+    return {osc1,osc2,vGain,level,vf};
   }
 
-  // ===== Drone synth =====
-  function setDroneTargets(freqs){
-    if (!audioCtx || !envGain) return;
-    const now=audioCtx.currentTime, attack=parseFloat(attackEl.value), release=parseFloat(releaseEl.value);
-    droneVoices.forEach(v=>v._used=false);
+  function openEnv(to=1.0, tau=0.15){
+    const now=audioCtx.currentTime;
+    envGain.gain.cancelScheduledValues(now);
+    envGain.gain.setValueAtTime(Math.max(envGain.gain.value, 0.0001), now);
+    envGain.gain.setTargetAtTime(to, now, Math.max(0.02, parseFloat(attackEl.value))*0.6);
+  }
+  function closeEnv(tau=0.3){
+    const now=audioCtx.currentTime;
+    envGain.gain.cancelScheduledValues(now);
+    envGain.gain.setValueAtTime(Math.max(envGain.gain.value, 0.0001), now);
+    envGain.gain.setTargetAtTime(0.0, now, Math.max(0.04, parseFloat(releaseEl.value))*0.6);
+  }
+
+  function setDrone(freqs){
+    if (!audioCtx) return;
+    const now=audioCtx.currentTime;
+    // mark all unused
+    voices.forEach(v=>v._used=false);
+    // upsert voices
     freqs.forEach(f=>{
-      let v=droneVoices.find(v=>Math.abs(v.targetFreq-f)<0.5);
-      if(!v){ v=makeVoice(f); droneVoices.push(v); }
+      let v=voices.find(v=>Math.abs(v.osc1.frequency.value/0.995 - f)<0.5);
+      if(!v){ v=makeVoice(f); voices.push(v); }
       v._used=true;
       v.osc1.frequency.setValueAtTime(f*0.995, now);
       v.osc2.frequency.setValueAtTime(f*1.005, now);
-      v.targetFreq=f;
-      v.gain.cancelScheduledValues(now);
-      v.gain.linearRampToValueAtTime(v.level, now + attack*0.6);
+      v.vGain.gain.cancelScheduledValues(now);
+      v.vGain.gain.setValueAtTime(Math.max(v.vGain.gain.value, 0.0001), now);
+      v.vGain.gain.setTargetAtTime(v.level, now, Math.max(0.02, parseFloat(attackEl.value))*0.6);
     });
-    for (let i=droneVoices.length-1;i>=0;i--){
-      const v=droneVoices[i];
-      if (!v._used && !holdEl.checked){
-        v.gain.cancelScheduledValues(now);
-        v.gain.linearRampToValueAtTime(0.0, now + release);
-        setTimeout(()=>{ try{ v.osc1.stop(); v.osc2.stop(); }catch{} }, Math.max(50, release*1000+50));
-        droneVoices.splice(i,1);
+    // remove unused
+    for(let i=voices.length-1;i>=0;i--){
+      const v=voices[i]; if(!v._used){
+        v.vGain.gain.cancelScheduledValues(now);
+        v.vGain.gain.setValueAtTime(Math.max(v.vGain.gain.value, 0.0001), now);
+        v.vGain.gain.setTargetAtTime(0.0, now, Math.max(0.04, parseFloat(releaseEl.value))*0.6);
+        setTimeout(()=>{ try{ v.osc1.stop(); v.osc2.stop(); }catch{} }, 800);
+        voices.splice(i,1);
       }
     }
-    const anyOn = freqs.length>0 || (holdEl.checked && droneVoices.length>0);
-    const tgt = anyOn ? 1.0 : 0.0;
-    envGain.gain.cancelScheduledValues(now);
-    envGain.gain.linearRampToValueAtTime(tgt, now + (tgt>0?attack:release));
+    if (freqs.length) openEnv(1.0); else closeEnv();
   }
 
-  function makeVoice(freq){
-    const osc1=audioCtx.createOscillator(), osc2=audioCtx.createOscillator();
-    const mix=audioCtx.createGain(); mix.gain.value=0.0;
-    const voiceFilter=audioCtx.createBiquadFilter(); voiceFilter.type="lowpass"; voiceFilter.frequency.value=parseFloat(toneEl.value);
-    const lfo=audioCtx.createOscillator(), lfoG=audioCtx.createGain();
-    lfo.frequency.value=0.12+Math.random()*0.08; lfoG.gain.value=4+Math.random()*4; lfo.connect(lfoG).connect(osc2.detune);
-    osc1.type="sawtooth"; osc2.type="triangle"; osc1.frequency.value=freq*0.995; osc2.frequency.value=freq*1.005;
-    osc1.connect(mix); osc2.connect(mix); mix.connect(voiceFilter).connect(envGain);
-    const now=audioCtx.currentTime; osc1.start(now+Math.random()*0.002); osc2.start(now+Math.random()*0.002); lfo.start();
-    const level=0.25/Math.sqrt(1+droneVoices.length);
-    return { osc1, osc2, gain:mix, level, targetFreq:freq, lfo, voiceFilter, _used:true };
-  }
+  testOrganBtn.onclick = async ()=>{ await startAudio();
+    setDrone([440, 440*Math.pow(2,7/12)]);
+    setTimeout(()=>setDrone([]), 2000);
+  };
 
-  // ===== Analysis (runs only if mic is enabled) =====
-  function analysisLoop(){
-    if (!audioCtx || !analyser) { requestAnimationFrame(analysisLoop); return; }
+  // ===== Mic (optional) =====
+  enableMicBtn.onclick = async ()=>{
+    try{
+      await startAudio();
+      if (micStream){ micStream.getTracks().forEach(t=>t.stop()); }
+      micStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }});
+      micStatusEl.textContent="Mic: allowed"; micStatusEl.className="badge ok";
+      micSource = audioCtx.createMediaStreamSource(micStream);
+      micGain   = audioCtx.createGain(); micGain.gain.value=parseFloat(micGainEl.value);
+      preamp    = audioCtx.createGain(); preamp.gain.value=dbToGain(parseFloat(preampEl.value));
+      comp      = audioCtx.createDynamicsCompressor(); comp.threshold.value=-50; comp.knee.value=24; comp.ratio.value=3; comp.attack.value=0.003; comp.release.value=0.25;
+      analyser  = audioCtx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85;
+      timeData  = new Float32Array(analyser.fftSize);
+      micSource.connect(micGain).connect(preamp).connect(comp).connect(analyser);
+      requestAnimationFrame(analyse);
+    }catch(e){
+      console.warn(e);
+      micStatusEl.textContent="Mic: blocked"; micStatusEl.className="badge err";
+    }
+  };
+
+  function analyse(){
+    if (!analyser){ requestAnimationFrame(analyse); return; }
     analyser.getFloatTimeDomainData(timeData);
-    analyserFFT.getFloatFrequencyData(freqData);
-
-    // meter
-    let rms=0; for (let i=0;i<timeData.length;i++){ const v=timeData[i]; rms+=v*v; }
-    rms=Math.sqrt(rms/timeData.length);
-    const db=rmsToDbfs(rms);
-    inDbEl.textContent = `${db.toFixed(1)} dBFS`;
-    drawInputMeter(db);
-
-    // pitch
-    const freq = autoCorrelate(timeData, audioCtx.sampleRate);
-    if (freq && Math.abs(freq-lastStableFreq)<1.5) stableCount=Math.min(60,stableCount+1);
-    else if (freq) stableCount=Math.max(0,stableCount-2);
-    else stableCount=Math.max(0,stableCount-4);
-    if (freq) lastStableFreq=lastStableFreq*0.85 + freq*0.15;
-
-    noteName.textContent = freq ? freqToNoteName(freq) : "—";
-    hzReadout.textContent = freq ? `${freq.toFixed(1)} Hz` : "— Hz";
-    stabilityEl.textContent = `stability: ${stableCount}`;
-
-    // peaks to notes
-    const peaks = topPeaksFromFFT(freqData, audioCtx.sampleRate, analyserFFT.fftSize, 3);
-    multiNotes.textContent = peaks.length ? peaks.map(p=>freqToNoteName(p)).join(" • ") : "—";
-
-    // follow
-    const gateDb = parseFloat(gateEl.value);
-    const gated = db > gateDb;
-    const confidence = (stableCount>=6) && gated;
-    if (autoFollowEl.checked && confidence){
-      const targets = (harmUseDetectedEl.checked && peaks.length) ? peaks : (freq? [freq] : []);
-      if (harmStackEl.checked && targets.length){ const r=targets[0]; targets.push(r*Math.pow(2,7/12), r*Math.pow(2,14/12)); }
-      setDroneTargets(targets);
-    }
-
-    currentEnvLevel = currentEnvLevel*0.85 + envGain.gain.value*0.15;
-
-    requestAnimationFrame(analysisLoop);
-  }
-
-  function autoCorrelate(buf, sr){
-    const N=buf.length; let rms=0; for (let i=0;i<N;i++){ const v=buf[i]; rms+=v*v; } rms=Math.sqrt(rms/N);
-    if (rms<0.001) return null;
-    let r1=0,r2=N-1,th=0.2; for (let i=0;i<N/2;i++){ if(Math.abs(buf[i])<th){ r1=i; break; } }
-    for (let i=1;i<N/2;i++){ if(Math.abs(buf[N-i])<th){ r2=N-i; break; } }
-    buf=buf.slice(r1,r2); const M=buf.length, ac=new Float32Array(M);
-    for(let lag=0;lag<M;lag++){ let s=0; for(let i=0;i<M-lag;i++){ s+=buf[i]*buf[i+lag]; } ac[lag]=s; }
-    let d=0; while(ac[d]>ac[d+1]) d++; let maxPos=d, maxVal=-1;
-    for(let i=d;i<M;i++){ if(ac[i]>maxVal){ maxVal=ac[i]; maxPos=i; } }
-    let T0=maxPos;
-    if (T0>0 && T0<M-1){ const x1=ac[T0-1],x2=ac[T0],x3=ac[T0+1]; const a=(x1+x3-2*x2)/2,b=(x3-x1)/2; if(a) T0=T0 - b/(2*a); }
-    const f=sr/T0; return (f>30 && f<2000)?f:null;
-  }
-
-  function topPeaksFromFFT(fftFloatData, sr, fftSize, count=3){
-    const n=fftFloatData.length, mags=new Float32Array(n);
-    for (let i=0;i<n;i++) mags[i]=Math.pow(10, fftFloatData[i]/20);
-    const peaks=[]; for (let i=4;i<n-4;i++){ const m=mags[i]; if (m>mags[i-1] && m>mags[i+1] && m>0.003) peaks.push({i,m}); }
-    peaks.sort((a,b)=>b.m-a.m);
-    const uniq=[], sep=4;
-    for (const p of peaks){ if (uniq.length>=count) break; if (!uniq.some(u=>Math.abs(u.i-p.i)<sep)) uniq.push(p); }
-    return uniq.map(p => (p.i * sr) / (2 * n)).map(quantizeToET);
-  }
-  function quantizeToET(f){ if(!f||!isFinite(f)||f<=0) return f; const midi=Math.round(12*Math.log2(f/A4)+69); return A4*Math.pow(2,(midi-69)/12); }
-
-  // ===== IR + visuals =====
-  function buildIR(ctx,dur=2.5,decay=0.5){
-    const rate=ctx.sampleRate, len=Math.floor(rate*dur), buf=ctx.createBuffer(2,len,rate);
-    for(let ch=0; ch<2; ch++){ const d=buf.getChannelData(ch); for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay*3); } }
-    return buf;
-  }
-
-  const noise=(function(n){ const a=new Float32Array(n); for(let i=0;i<n;i++) a[i]=Math.random(); return a; })(256);
-  function valNoise1D(p){ const n=noise.length,i0=Math.floor(p)%n,i1=(i0+1)%n,t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; }
-  function fbm(x,y,z){ let tot=0,amp=0.6,f=1; for(let o=0;o<4;o++){ const s=valNoise1D(x*f+y*f*1.37+z*f*0.77); tot+=s*amp; amp*=0.5; f*=2.1; } return tot; }
-
-  let t=0;
-  function draw(){
-    const w=canvas.width,h=canvas.height;
-    ctx.globalCompositeOperation='source-over'; ctx.fillStyle='rgba(8,12,18,0.08)'; ctx.fillRect(0,0,w,h);
-    const intensity=clamp(currentEnvLevel,0,1), scale=0.004+0.001*intensity, layers=3;
-    for(let L=0;L<layers;L++){
-      const alpha=0.08+0.12*intensity*(1-L/layers); ctx.globalAlpha=alpha; ctx.globalCompositeOperation='lighter';
-      const hue=198+(270-198)*(0.3+0.7*intensity)+L*6; ctx.fillStyle=`hsla(${hue},85%,${40+L*4}%,${alpha})`;
-      const step=10+L*4;
-      for(let y=0;y<h;y+=step){ for(let x=0;x<w;x+=step){
-        const n=fbm(x*scale,y*scale,t*0.0005+L*10), r=step*(0.8+1.8*n*intensity);
-        ctx.beginPath(); ctx.ellipse(x,y,r,r*0.7,0,0,Math.PI*2); ctx.fill();
-      }}
-    }
-    ctx.globalAlpha=1; t+=16; requestAnimationFrame(draw);
-  }
-
-  function drawInputMeter(db){
-    const w=inMeter.width,h=inMeter.height; mctx.clearRect(0,0,w,h);
-    if (!analyser){ mctx.fillStyle='rgba(255,255,255,.06)'; mctx.fillRect(0,0,w,h); return; }
-    const norm=Math.max(0,Math.min(1,(db+90)/90));
-    mctx.fillStyle='rgba(255,255,255,.06)'; mctx.fillRect(0,0,w,h);
-    mctx.fillStyle = norm>0.95 ? '#ff6b6b' : (norm>0.8 ? '#ffcc66' : '#69e089');
-    mctx.fillRect(0,0,Math.floor(w*norm),h);
+    let rms=0; for(let i=0;i<timeData.length;i++){ const v=timeData[i]; rms+=v*v; }
+    rms=Math.sqrt(rms/timeData.length); const db=rmsToDbfs(rms);
+    inDbEl.textContent=`${db.toFixed(1)} dBFS`;
+    drawMeter(db);
+    // simple follow: if above gate, hold A+E drone
+    const gate=parseFloat(gateEl.value);
+    if (db>gate){ setDrone([440, 440*Math.pow(2,7/12)]); } else { setDrone([]); }
+    requestAnimationFrame(analyse);
   }
 
   // ===== UI =====
-  startBtn.onclick = async ()=>{ await startAudio(); micStatusEl.textContent="Mic: not enabled"; micStatusEl.className="badge"; };
-  enableMicBtn.onclick = enableMic;
-  beepBtn.onclick = async ()=>{ await startAudio(); const osc=audioCtx.createOscillator(), g=audioCtx.createGain(); g.gain.value=0.2; osc.type='sine'; osc.frequency.value=440; osc.connect(g).connect(audioCtx.destination); const n=audioCtx.currentTime; osc.start(n); osc.stop(n+1); };
-  testBtn.onclick = async ()=>{
-    await startAudio();
-    const a=440, e=a*Math.pow(2,7/12);
-    holdEl.checked=true; setDroneTargets([a,e]);
-    setTimeout(()=>{ holdEl.checked=false; setDroneTargets([]); }, 2000);
-  };
-  bypassFxEl.onchange = ()=>{ if(audioCtx) setBypassGains(bypassFxEl.checked); };
+  startBtn.onclick = async ()=>{ await startAudio(); };
+  fxOnEl.onchange = ()=> setFxActive(fxOnEl.checked);
 
-  // sliders
   volumeEl.oninput = e=>{ volVal.textContent=(+e.target.value).toFixed(2); if(outGain) outGain.gain.value=parseFloat(e.target.value); };
   attackEl.oninput = e=>{ attackVal.textContent=(+e.target.value).toFixed(2)+'s'; };
   releaseEl.oninput= e=>{ releaseVal.textContent=(+e.target.value).toFixed(2)+'s'; };
-  toneEl.oninput   = e=>{ toneVal.textContent=Math.round(+e.target.value)+' Hz'; if(lpFilter) lpFilter.frequency.value=parseFloat(e.target.value); };
-  chorusEl.oninput = e=>{ const v=parseFloat(e.target.value); chorusVal.textContent=v.toFixed(2); if(chorusDelay1&&chorusDelay2){ chorusDelay1.delayTime.value=0.008+0.016*v; chorusDelay2.delayTime.value=0.012+0.020*v; } };
-  reverbEl.oninput = e=>{ const v=parseFloat(e.target.value); reverbVal.textContent=v.toFixed(2); if(reverbMix) reverbMix.gain.value=v; };
+  toneEl.oninput   = e=>{ toneVal.textContent=Math.round(+e.target.value)+' Hz'; if(lpf) lpf.frequency.value=parseFloat(e.target.value); voices.forEach(v=>v.vf.frequency.value=parseFloat(e.target.value)); };
+  chorusEl.oninput = e=>{ const v=parseFloat(e.target.value); chorusVal.textContent=v.toFixed(2); if(d1&&d2){ d1.delayTime.value=0.008+0.016*v; d2.delayTime.value=0.012+0.020*v; } };
+  reverbEl.oninput = e=>{ const v=parseFloat(e.target.value); reverbVal.textContent=v.toFixed(2); if(revMix) revMix.gain.value=v; };
+
   micGainEl.oninput= e=>{ micGainVal.textContent=(+e.target.value).toFixed(2); if(micGain) micGain.gain.value=parseFloat(e.target.value); };
   preampEl.oninput = e=>{ const db=parseFloat(e.target.value); preampVal.textContent=`+${db} dB`; if(preamp) preamp.gain.value=dbToGain(db); };
   gateEl.oninput   = e=>{ gateVal.textContent=`${(+e.target.value).toFixed(0)} dBFS`; };
 
   function updateCtxState(){ ctxStateEl.textContent = audioCtx ? audioCtx.state : "—"; }
-  document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible' && audioCtx && audioCtx.state!=='running') audioCtx.resume().then(updateCtxState); });
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && audioCtx && audioCtx.state!=='running'){ audioCtx.resume().then(updateCtxState); } });
 
-  // canvas sizing
+  // ===== Visuals =====
+  const noise=(n=>{ const a=new Float32Array(n); for(let i=0;i<n;i++) a[i]=Math.random(); return a; })(256);
+  const vn1=p=>{ const n=noise.length,i0=Math.floor(p)%n,i1=(i0+1)%n,t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; };
+  const fbm=(x,y,z)=>{ let tot=0,amp=0.6,f=1; for(let o=0;o<4;o++){ const s=vn1(x*f+y*f*1.37+z*f*0.77); tot+=s*amp; amp*=0.5; f*=2.1; } return tot; };
+  let envVis=0;
+  function draw(){
+    if (envGain && audioCtx){ envVis = envVis*0.9 + envGain.gain.value*0.1; }
+    const w=canvas.width,h=canvas.height;
+    vctx.fillStyle='rgba(8,12,18,.08)'; vctx.fillRect(0,0,w,h);
+    const intensity=clamp(envVis,0,1), scale=0.004+0.001*intensity;
+    for(let L=0;L<3;L++){
+      const alpha=0.08 + 0.12*intensity*(1-L/3);
+      vctx.globalAlpha=alpha; vctx.globalCompositeOperation='lighter';
+      const hue=198+(270-198)*(0.3+0.7*intensity)+L*6; vctx.fillStyle=`hsla(${hue},85%,${40+L*4}%,${alpha})`;
+      const step=10+L*4;
+      for(let y=0;y<h;y+=step){
+        for(let x=0;x<w;x+=step){
+          const n=fbm(x*scale,y*scale,performance.now()*0.0005+L*10);
+          const r=step*(0.8+1.8*n*intensity);
+          vctx.beginPath(); vctx.ellipse(x,y,r,r*0.7,0,0,Math.PI*2); vctx.fill();
+        }
+      }
+    }
+    vctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
   function resizeCanvas(){ const ratio=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect(); canvas.width=Math.floor(rect.width*ratio); canvas.height=Math.floor(420*ratio); }
-  resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+  function drawMeter(db){ const w=inMeter.width,h=inMeter.height; mctx.clearRect(0,0,w,h); const n=Math.max(0,Math.min(1,(db+90)/90)); mctx.fillStyle='rgba(255,255,255,.06)'; mctx.fillRect(0,0,w,h); mctx.fillStyle = n>0.95?'#ff6b6b':(n>0.8?'#ffcc66':'#69e089'); mctx.fillRect(0,0,Math.floor(w*n),h); }
+  resizeCanvas(); requestAnimationFrame(draw);
 
 })();
 </script>
