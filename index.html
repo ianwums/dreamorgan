@@ -3,87 +3,59 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Misty Drone — Mic-Aware Dream Organ</title>
+<title>Misty Drone — Mic-Aware Dream Organ (Debug Build)</title>
 <style>
-  :root {
-    --bg: #0b0f14;
-    --panel: #121823;
-    --muted: #8aa0b2;
-    --text: #e9f1f7;
-    --accent: #67d4ff;
-    --accent-2: #b486ff;
-    --good: #69e089;
-    --warn: #ffcc66;
-    --bad: #ff6b6b;
-  }
-  html, body {
-    height: 100%;
-    background:
-      radial-gradient(1200px 700px at 70% -10%, rgba(103,212,255,0.06), transparent 60%),
-      radial-gradient(900px 600px at -10% 120%, rgba(180,134,255,0.07), transparent 60%),
-      var(--bg);
-    color: var(--text);
-    font: 15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
-  }
-  .wrap { max-width: 1100px; margin: 24px auto; padding: 16px; }
-  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
-  h1 { font-weight:700; font-size:20px; letter-spacing:.6px; margin:0; }
-  .pill { background: linear-gradient(135deg, rgba(103,212,255,0.2), rgba(180,134,255,0.2));
-          border: 1px solid rgba(103,212,255,0.3); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
-  .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .state { font-size:12px; color:var(--muted); }
-  .grid { display:grid; gap:16px; grid-template-columns:1.2fr 1fr; }
-  @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
-  .panel {
-    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:16px;
-    box-shadow:0 20px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
-    padding:14px;
-  }
-  .panel h2 { margin:0 0 10px; font-size:14px; color:var(--muted); font-weight:600; letter-spacing:.4px; }
-  .controls { display:grid; gap:10px; grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .controls .row { display:grid; gap:8px; background:rgba(255,255,255,0.02); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.05); }
-  .controls label { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; align-items:baseline; }
-  input[type="range"]{ width:100%; accent-color:var(--accent); }
-  .toggles{ display:flex; flex-wrap:wrap; gap:10px; }
-  .toggle{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); user-select:none; }
-  .toggle input{ width:18px; height:18px; }
-  .readouts{ display:grid; gap:8px; grid-template-columns:repeat(3, minmax(0,1fr)); margin-top:10px; }
-  @media (max-width:700px){ .readouts{ grid-template-columns:1fr; } }
-  .chip{ background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:8px; min-height:48px; }
-  .chip strong{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
-  .note{ font-size:28px; font-weight:700; letter-spacing:1px; }
-  .hz{ font-size:12px; color:var(--muted); }
-  .status{ font-size:12px; margin-top:6px; color:var(--muted); }
-  .btn{
-    appearance:none; border:0; padding:10px 14px; border-radius:12px; color: var(--bg);
-    background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight:700;
-    box-shadow:0 10px 25px rgba(103,212,255,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
-    cursor:pointer;
-  }
-  .btn.secondary{ background: rgba(255,255,255,0.08); color: var(--text); box-shadow:none; border:1px solid rgba(255,255,255,0.15); }
-  .btn:disabled { opacity:.6; cursor:not-allowed; }
-  .led{ display:inline-block; width:10px; height:10px; border-radius:50%; background:#444; margin-left:8px; box-shadow:0 0 0 2px rgba(255,255,255,0.03) inset; }
-  .led.on{ background:var(--good); box-shadow:0 0 12px var(--good); }
-  .led.warn{ background:var(--warn); box-shadow:0 0 10px var(--warn); }
-  .led.bad{ background:var(--bad); box-shadow:0 0 10px var(--bad); }
-  canvas#mist{ width:100%; height:420px; display:block; border-radius:14px;
-               background: radial-gradient(600px 300px at 50% 10%, rgba(255,255,255,0.02), transparent 70%), transparent;
-               filter: blur(0.3px); }
-  footer{ margin-top:16px; color:var(--muted); font-size:12px; text-align:center; }
+  :root { --bg:#0b0f14; --panel:#121823; --muted:#8aa0b2; --text:#e9f1f7; --accent:#67d4ff; --accent-2:#b486ff; --good:#69e089; --warn:#ffcc66; --bad:#ff6b6b; }
+  html,body{height:100%;background:
+    radial-gradient(1200px 700px at 70% -10%, rgba(103,212,255,0.06), transparent 60%),
+    radial-gradient(900px 600px at -10% 120%, rgba(180,134,255,0.07), transparent 60%),
+    var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;}
+  .wrap{max-width:1100px;margin:24px auto;padding:16px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+  h1{font-weight:700;font-size:20px;letter-spacing:.6px;margin:0;}
+  .pill{background:linear-gradient(135deg,rgba(103,212,255,.2),rgba(180,134,255,.2));border:1px solid rgba(103,212,255,.3);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .state{font-size:12px;color:var(--muted);}
+  .grid{display:grid;gap:16px;grid-template-columns:1.2fr 1fr;}
+  @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.01),rgba(255,255,255,0));border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);padding:14px;}
+  .panel h2{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;letter-spacing:.4px;}
+  .controls{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));}
+  .row{display:grid;gap:8px;background:rgba(255,255,255,.02);border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,.05);}
+  label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline;}
+  input[type="range"]{width:100%;accent-color:var(--accent);}
+  .toggles{display:flex;flex-wrap:wrap;gap:10px;}
+  .toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);user-select:none;}
+  .readouts{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px;}
+  @media (max-width:700px){.readouts{grid-template-columns:1fr;}}
+  .chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px;min-height:48px;}
+  .chip strong{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;}
+  .note{font-size:28px;font-weight:700;letter-spacing:1px;}
+  .hz{font-size:12px;color:var(--muted);}
+  .btn{appearance:none;border:0;padding:10px 14px;border-radius:12px;color:var(--bg);
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));font-weight:700;box-shadow:0 10px 25px rgba(103,212,255,.25),inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;}
+  .btn.secondary{background:rgba(255,255,255,.08);color:var(--text);box-shadow:none;border:1px solid rgba(255,255,255,.15);}
+  .btn:disabled{opacity:.6;cursor:not-allowed;}
+  .led{display:inline-block;width:10px;height:10px;border-radius:50%;background:#444;margin-left:8px;box-shadow:0 0 0 2px rgba(255,255,255,.03) inset;}
+  .led.on{background:var(--good);box-shadow:0 0 12px var(--good);}
+  .led.warn{background:var(--warn);box-shadow:0 0 10px var(--warn);}
+  .led.bad{background:var(--bad);box-shadow:0 0 10px var(--bad);}
+  canvas#mist{width:100%;height:420px;display:block;border-radius:14px;background:radial-gradient(600px 300px at 50% 10%,rgba(255,255,255,.02),transparent 70%),transparent;filter:blur(.3px);}
+  footer{margin-top:16px;color:var(--muted);font-size:12px;text-align:center;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Misty Drone <span class="pill">mic-aware dreamy organ</span></h1>
+    <h1>Misty Drone <span class="pill">mic-aware dreamy organ — debug</span></h1>
     <div class="actions">
-      <button id="startBtn"  class="btn">Enable Microphone & Start</button>
-      <button id="resumeBtn" class="btn secondary" title="Resume audio & restart mic if needed">Force Resume</button>
-      <button id="beepBtn"   class="btn secondary" title="Direct 440 Hz tone for 1s">Beep 1s</button>
-      <button id="testBtn"   class="btn secondary" title="Bypass detection and play a test drone">Test Drone</button>
-      <label class="toggle" title="Low-level monitor to help debugging"><input id="monitorMic" type="checkbox"> Monitor Mic</label>
+      <button id="startBtn" class="btn">Enable Microphone & Start</button>
+      <button id="resumeBtn" class="btn secondary">Force Resume</button>
+      <button id="resetBtn" class="btn secondary">Reset Audio</button>
+      <button id="beepBtn" class="btn secondary" title="Direct 440 Hz for 1s">Beep 1s</button>
+      <button id="selfTestBtn" class="btn secondary" title="Pad through current routing">Synth Self-Test</button>
+      <label class="toggle"><input id="bypassFx" type="checkbox"> Bypass FX</label>
+      <label class="toggle" title="Quiet mic monitor for debugging"><input id="monitorMic" type="checkbox"> Monitor Mic</label>
       <div class="state">AudioContext: <span id="ctxState">—</span></div>
     </div>
   </header>
@@ -111,24 +83,9 @@
       </div>
 
       <div class="readouts">
-        <div class="chip">
-          <strong>Dominant Pitch</strong>
-          <div class="note" id="noteName">—</div>
-          <div class="hz" id="hz">— Hz</div>
-          <div class="status">Mic <span id="micLed" class="led"></span>  |  Synth <span id="synthLed" class="led"></span></div>
-        </div>
-        <div class="chip">
-          <strong>Detected Notes (peaks)</strong>
-          <div id="multiNotes" style="font-size:16px; line-height:1.35;">—</div>
-          <div class="small" id="stability">stability: —</div>
-        </div>
-        <div class="chip">
-          <strong>Input Level</strong>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <canvas id="inMeter" width="280" height="14" style="border-radius:8px; background:rgba(255,255,255,0.04); width:100%; height:14px;"></canvas>
-            <span id="inDb" class="small">— dBFS</span>
-          </div>
-        </div>
+        <div class="chip"><strong>Dominant Pitch</strong><div class="note" id="noteName">—</div><div class="hz" id="hz">— Hz</div><div class="hz">Mic <span id="micLed" class="led"></span> | Synth <span id="synthLed" class="led"></span></div></div>
+        <div class="chip"><strong>Detected Notes (peaks)</strong><div id="multiNotes" style="font-size:16px;line-height:1.35;">—</div><div class="hz" id="stability">stability: —</div></div>
+        <div class="chip"><strong>Input Level</strong><div style="display:flex;align-items:center;gap:10px;"><canvas id="inMeter" width="280" height="14" style="border-radius:8px;background:rgba(255,255,255,.04);width:100%;height:14px;"></canvas><span id="inDb" class="hz">— dBFS</span></div></div>
       </div>
     </section>
 
@@ -138,260 +95,209 @@
     </section>
   </div>
 
-  <footer>Tip: use headphones or keep speakers low to avoid feedback. HTTPS is required for the mic.</footer>
+  <footer>Tip: headphones recommended. HTTPS required for mic.</footer>
 </div>
 
 <script>
 (function(){
   // ===== Utils =====
-  const A4 = 440;
-  const NOTE_NAMES = ["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
-  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
-  const dbToGain = db=>Math.pow(10, db/20);
-  const rmsToDbfs = rms=>20*Math.log10(rms || 1e-12);
+  const A4=440, NOTE_NAMES=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
+  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+  const dbToGain=db=>Math.pow(10,db/20);
+  const rmsToDbfs=rms=>20*Math.log10(rms||1e-12);
+  function freqToNoteName(f){ if(!isFinite(f)||f<=0) return "—"; const n=Math.round(12*Math.log2(f/A4))+69; return NOTE_NAMES[(n%12+12)%12]+(Math.floor(n/12)-1); }
 
   // ===== DOM =====
-  const startBtn  = document.getElementById('startBtn');
-  const resumeBtn = document.getElementById('resumeBtn');
-  const beepBtn   = document.getElementById('beepBtn');
-  const testBtn   = document.getElementById('testBtn');
-  const monitorMicEl = document.getElementById('monitorMic');
-  const ctxStateEl = document.getElementById('ctxState');
+  const $=id=>document.getElementById(id);
+  const startBtn=$("startBtn"), resumeBtn=$("resumeBtn"), resetBtn=$("resetBtn"), beepBtn=$("beepBtn"), selfTestBtn=$("selfTestBtn");
+  const monitorMicEl=$("monitorMic"), bypassFxEl=$("bypassFx"), ctxStateEl=$("ctxState");
+  const micGainEl=$("micGain"), preampEl=$("preamp"), gateEl=$("gate"), volumeEl=$("volume"), attackEl=$("attack"), releaseEl=$("release"), toneEl=$("tone"), chorusEl=$("chorus"), reverbEl=$("reverb");
+  const micGainVal=$("micGainVal"), preampVal=$("preampVal"), gateVal=$("gateVal"), volVal=$("volVal"), attackVal=$("attackVal"), releaseVal=$("releaseVal"), toneVal=$("toneVal"), chorusVal=$("chorusVal"), reverbVal=$("reverbVal");
+  const noteName=$("noteName"), hzReadout=$("hz"), multiNotes=$("multiNotes"), stabilityEl=$("stability"), micLed=$("micLed"), synthLed=$("synthLed");
+  const canvas=$("mist"), ctx=canvas.getContext("2d"), inMeter=$("inMeter"), mctx=inMeter.getContext("2d"), inDbEl=$("inDb");
+  const autoFollowEl=$("autoFollow"), holdEl=$("hold"), harmUseDetectedEl=$("harmUseDetected"), harmStackEl=$("harmStack");
 
-  const micGainEl = document.getElementById('micGain');
-  const preampEl  = document.getElementById('preamp');
-  const gateEl    = document.getElementById('gate');
-  const volumeEl  = document.getElementById('volume');
-  const attackEl  = document.getElementById('attack');
-  const releaseEl = document.getElementById('release');
-  const toneEl    = document.getElementById('tone');
-  const chorusEl  = document.getElementById('chorus');
-  const reverbEl  = document.getElementById('reverb');
-
-  const micGainVal = document.getElementById('micGainVal');
-  const preampVal  = document.getElementById('preampVal');
-  const gateVal    = document.getElementById('gateVal');
-  const volVal     = document.getElementById('volVal');
-  const attackVal  = document.getElementById('attackVal');
-  const releaseVal = document.getElementById('releaseVal');
-  const toneVal    = document.getElementById('toneVal');
-  const chorusVal  = document.getElementById('chorusVal');
-  const reverbVal  = document.getElementById('reverbVal');
-
-  const noteName = document.getElementById('noteName');
-  const hzReadout = document.getElementById('hz');
-  const multiNotes = document.getElementById('multiNotes');
-  const stabilityEl = document.getElementById('stability');
-  const micLed = document.getElementById('micLed');
-  const synthLed = document.getElementById('synthLed');
-
-  const canvas = document.getElementById('mist');
-  const ctx = canvas.getContext('2d');
-  const inMeter = document.getElementById('inMeter');
-  const mctx = inMeter.getContext('2d');
-  const inDbEl = document.getElementById('inDb');
-
-  const autoFollowEl = document.getElementById('autoFollow');
-  const holdEl = document.getElementById('hold');
-  const harmUseDetectedEl = document.getElementById('harmUseDetected');
-  const harmStackEl = document.getElementById('harmStack');
-
-  // ===== Audio nodes / state =====
+  // ===== Audio state =====
   let audioCtx, micStream, micSource, micGain, analyser, analyserFFT;
-  let outGain, lpFilter, reverbSend, reverbReturn, reverbMix, chorusDelay1, chorusDelay2, master;
+  let outGain, lpFilter, reverbSend, convolver, reverbReturn, reverbMix, chorusDelay1, chorusDelay2, master;
   let preamp, comp, keepAlive, monitorGain;
-  let droneVoices = [], envGain;
-  let silenceFrames = 0;
-  let started = false, testMode = false;
+  let envGain, bypassBus; // new: direct bus to output for bypass
+  let droneVoices=[], timeData, freqData;
+  let lastStableFreq=0, stableCount=0, currentEnvLevel=0, silenceFrames=0;
+  let started=false;
 
-  // Pitch buffers
-  let timeData, freqData;
-  let lastStableFreq = 0, stableCount = 0;
-  let currentEnvLevel = 0;
-
-  // ===== Helpers =====
-  function updateCtxState(){
-    ctxStateEl.textContent = audioCtx ? audioCtx.state : '—';
-  }
-
+  // ===== Build graph =====
   async function getMicStream(){
-    if (micStream) { try { micStream.getTracks().forEach(t=>t.stop()); } catch{} }
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false }
-    });
+    if (micStream){ try{ micStream.getTracks().forEach(t=>t.stop()); }catch{} }
+    micStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }});
     const track = micStream.getAudioTracks()[0];
-    if (track){
-      track.onended = ()=>{ restartMic("track ended"); };
-    }
+    if (track){ track.onended=()=>restartMic("track ended"); }
     return micStream;
   }
 
   async function buildGraph(){
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint:"interactive" });
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)({ latencyHint:"interactive" });
 
+    // Nodes common to both paths
+    envGain = audioCtx.createGain(); envGain.gain.value = 0.0;
+    outGain = audioCtx.createGain(); outGain.gain.value = parseFloat(volumeEl.value);
+    bypassBus = audioCtx.createGain(); bypassBus.gain.value = 1.0;
+
+    // FX path (simplified, no ChannelMerger)
+    lpFilter = audioCtx.createBiquadFilter(); lpFilter.type="lowpass"; lpFilter.frequency.value=parseFloat(toneEl.value); lpFilter.Q.value=0.5;
+    chorusDelay1 = audioCtx.createDelay(); chorusDelay2 = audioCtx.createDelay();
+    chorusDelay1.delayTime.value = 0.012; chorusDelay2.delayTime.value = 0.018;
+    const LFO1 = audioCtx.createOscillator(), LFO2 = audioCtx.createOscillator();
+    const LFOg1 = audioCtx.createGain(), LFOg2 = audioCtx.createGain();
+    LFO1.frequency.value=0.28; LFO2.frequency.value=0.41; LFOg1.gain.value=0.006; LFOg2.gain.value=0.008;
+    LFO1.connect(LFOg1).connect(chorusDelay1.delayTime); LFO2.connect(LFOg2).connect(chorusDelay2.delayTime); LFO1.start(); LFO2.start();
+
+    reverbSend = audioCtx.createGain(); reverbSend.gain.value = 0.25;
+    convolver = audioCtx.createConvolver(); convolver.buffer = buildImpulseResponse(audioCtx, 2.2, 0.4);
+    reverbReturn = audioCtx.createGain(); reverbReturn.gain.value = 1.0;
+    reverbMix = audioCtx.createGain(); reverbMix.gain.value = parseFloat(reverbEl.value);
+    master = audioCtx.createGain(); master.gain.value = 1.0;
+
+    // Route synth both ways: env -> bypassBus (direct) AND env -> FX path
+    envGain.connect(bypassBus);                      // direct/bypass path
+    envGain.connect(lpFilter);                       // FX path start
+    lpFilter.connect(chorusDelay1);
+    lpFilter.connect(chorusDelay2);
+    const fxMix = audioCtx.createGain(); fxMix.gain.value = 1.0;
+    chorusDelay1.connect(fxMix);
+    chorusDelay2.connect(fxMix);
+    fxMix.connect(reverbSend);
+    reverbSend.connect(convolver); convolver.connect(reverbReturn); reverbReturn.connect(reverbMix);
+    fxMix.connect(master);           // dry portion of FX path
+    reverbMix.connect(master);       // wet portion
+    // Final output: choose between bypass or FX by gain switching
+    const bypassSwitch = audioCtx.createGain();      // 1 when bypass, 0 otherwise
+    const fxSwitch = audioCtx.createGain();          // 1 when FX,     0 otherwise
+    // initialize
+    bypassSwitch.gain.value = bypassFxEl.checked ? 1 : 0;
+    fxSwitch.gain.value      = bypassFxEl.checked ? 0 : 1;
+
+    bypassBus.connect(bypassSwitch).connect(outGain);
+    master.connect(fxSwitch).connect(outGain);
+    outGain.connect(audioCtx.destination);
+
+    // Mic / analysis chain
     const stream = await getMicStream();
     micSource = audioCtx.createMediaStreamSource(stream);
-
     micGain = audioCtx.createGain(); micGain.gain.value = parseFloat(micGainEl.value);
-    preamp  = audioCtx.createGain(); preamp.gain.value = dbToGain(parseFloat(preampEl.value));
-
+    preamp = audioCtx.createGain(); preamp.gain.value = dbToGain(parseFloat(preampEl.value));
     comp = audioCtx.createDynamicsCompressor();
-    comp.threshold.value = -50; comp.knee.value = 24; comp.ratio.value = 3; comp.attack.value = 0.003; comp.release.value = 0.25;
-
-    analyser = audioCtx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.85;
-    analyserFFT = audioCtx.createAnalyser(); analyserFFT.fftSize = 4096; analyserFFT.smoothingTimeConstant = 0.7;
+    comp.threshold.value=-50; comp.knee.value=24; comp.ratio.value=3; comp.attack.value=0.003; comp.release.value=0.25;
+    analyser = audioCtx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85;
+    analyserFFT = audioCtx.createAnalyser(); analyserFFT.fftSize=4096; analyserFFT.smoothingTimeConstant=0.7;
     timeData = new Float32Array(analyser.fftSize);
     freqData = new Float32Array(analyserFFT.frequencyBinCount);
 
-    envGain = audioCtx.createGain(); envGain.gain.value = 0.0;
-    lpFilter = audioCtx.createBiquadFilter(); lpFilter.type = "lowpass"; lpFilter.frequency.value = parseFloat(toneEl.value); lpFilter.Q.value = 0.5;
+    micSource.connect(micGain); micGain.connect(preamp); preamp.connect(comp);
+    comp.connect(analyser); comp.connect(analyserFFT);
 
-    chorusDelay1 = audioCtx.createDelay(); chorusDelay2 = audioCtx.createDelay();
-    chorusDelay1.delayTime.value = 0.012; chorusDelay2.delayTime.value = 0.018;
+    // keep alive + optional monitor
+    keepAlive = audioCtx.createGain(); keepAlive.gain.value = 0.0; comp.connect(keepAlive).connect(audioCtx.destination);
+    monitorGain = audioCtx.createGain(); monitorGain.gain.value = 0.0; comp.connect(monitorGain).connect(audioCtx.destination);
 
-    const chorusLFO1 = audioCtx.createOscillator(), chorusLFO2 = audioCtx.createOscillator();
-    const lfoGain1 = audioCtx.createGain(), lfoGain2 = audioCtx.createGain();
-    chorusLFO1.frequency.value = 0.28; chorusLFO2.frequency.value = 0.41;
-    lfoGain1.gain.value = 0.006; lfoGain2.gain.value = 0.008;
-    chorusLFO1.connect(lfoGain1).connect(chorusDelay1.delayTime);
-    chorusLFO2.connect(lfoGain2).connect(chorusDelay2.delayTime);
-    chorusLFO1.start(); chorusLFO2.start();
-
-    const convolver = audioCtx.createConvolver();
-    convolver.buffer = buildImpulseResponse(audioCtx, 2.2, 0.4);
-    reverbSend = audioCtx.createGain(); reverbSend.gain.value = 0.25;
-    reverbReturn = audioCtx.createGain(); reverbReturn.gain.value = 1.0;
-    reverbMix = audioCtx.createGain(); reverbMix.gain.value = parseFloat(reverbEl.value);
-
-    outGain = audioCtx.createGain(); outGain.gain.value = parseFloat(volumeEl.value);
-    master = audioCtx.createGain(); master.gain.value = 1.0;
-
-    // Mic chain
-    micSource.connect(micGain);
-    micGain.connect(preamp);
-    preamp.connect(comp);
-    comp.connect(analyser);
-    comp.connect(analyserFFT);
-
-    // Optional mic monitor (debug)
-    monitorGain = audioCtx.createGain(); monitorGain.gain.value = 0.0;
-    comp.connect(monitorGain).connect(audioCtx.destination);
-
-    // Keep mic graph alive (silent)
-    keepAlive = audioCtx.createGain(); keepAlive.gain.value = 0.0;
-    comp.connect(keepAlive).connect(audioCtx.destination);
-
-    // Synth chain
-    envGain.connect(lpFilter);
-    const merger = audioCtx.createChannelMerger(2);
-    lpFilter.connect(chorusDelay1); lpFilter.connect(chorusDelay2);
-    chorusDelay1.connect(merger, 0, 0); chorusDelay2.connect(merger, 0, 1);
-
-    const postChorus = audioCtx.createGain(); postChorus.gain.value = 1.0;
-    merger.connect(postChorus);
-    postChorus.connect(reverbSend); reverbSend.connect(convolver); convolver.connect(reverbReturn); reverbReturn.connect(reverbMix);
-
-    postChorus.connect(master); reverbMix.connect(master); master.connect(outGain).connect(audioCtx.destination);
+    // UI hook: toggle bypass gains atomically
+    bypassFxEl.onchange = ()=>{
+      const bypassOn = bypassFxEl.checked;
+      bypassSwitch.gain.setValueAtTime(bypassOn?1:0, audioCtx.currentTime);
+      fxSwitch.gain.setValueAtTime(bypassOn?0:1, audioCtx.currentTime);
+    };
 
     micLed.classList.add('on');
     updateCtxState();
   }
 
+  // ===== Start / Resume / Reset =====
   async function start(){
     if (started) return;
-    started = true;
-    startBtn.disabled = true;
-    try {
+    started=true; startBtn.disabled=true;
+    try{
       await buildGraph();
       requestAnimationFrame(draw);
       analysisLoop();
       updateUIValues();
       keepResuming();
-    } catch (err){
-      alert('Microphone permission or setup failed. See console for details.');
-      console.error(err);
-      started = false;
-      startBtn.disabled = false;
+    }catch(e){
+      alert("Mic permission/setup failed. See console.");
+      console.error(e);
+      started=false; startBtn.disabled=false;
     }
   }
-
-  async function ensureRunningGraph(){
+  async function ensureRunning(){
     if (!audioCtx){ await start(); return; }
-    if (audioCtx.state !== 'running'){ await audioCtx.resume(); updateCtxState(); }
-    if (!micSource){ await buildGraph(); }
+    if (audioCtx.state!=="running"){ await audioCtx.resume(); updateCtxState(); }
+    if (!envGain || !outGain){ await buildGraph(); }
+  }
+  async function resetAudio(){
+    try{
+      if (micStream){ micStream.getTracks().forEach(t=>t.stop()); }
+      if (audioCtx){ await audioCtx.close(); }
+    }catch{}
+    audioCtx=undefined; micStream=undefined; micSource=undefined;
+    started=false; startBtn.disabled=false;
+    micLed.classList.remove('on','warn','bad'); synthLed.classList.remove('on');
+    await start();
   }
 
-  // Auto-resume & device-change handling
+  // ===== Buttons =====
+  startBtn.onclick = start;
+  resumeBtn.onclick = async()=>{ await ensureRunning(); await restartMic("manual"); };
+  resetBtn.onclick  = resetAudio;
+
+  beepBtn.onclick = async ()=>{
+    await ensureRunning();
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    g.gain.value = 0.2; osc.type="sine"; osc.frequency.value=440;
+    osc.connect(g).connect(audioCtx.destination);
+    const t=audioCtx.currentTime; osc.start(t); osc.stop(t+1.0);
+  };
+
+  selfTestBtn.onclick = async ()=>{
+    await ensureRunning();
+    // Play A+E for 2 seconds through current routing
+    setDroneTargets([440, 440*Math.pow(2,7/12)]);
+    holdEl.checked = true;
+    synthLed.classList.add('on');
+    setTimeout(()=>{ holdEl.checked=false; setDroneTargets([]); synthLed.classList.remove('on'); }, 2000);
+  };
+
+  monitorMicEl.onchange = ()=>{ if (monitorGain) monitorGain.gain.value = monitorMicEl.checked?0.05:0.0; };
+
+  // ===== Mic maintenance =====
+  async function restartMic(reason="watchdog"){ try{ await buildGraph(); }catch(e){ console.warn("Mic restart failed:",e); } }
   function keepResuming(){
-    document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') resumeAudio(); });
+    document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==="visible") resumeAudio(); });
     window.addEventListener('focus', resumeAudio);
     audioCtx.addEventListener?.('statechange', updateCtxState);
-    setInterval(()=>{ if (audioCtx && audioCtx.state !== 'running') resumeAudio(); }, 4000);
+    setInterval(()=>{ if (audioCtx && audioCtx.state!=="running") resumeAudio(); }, 4000);
     navigator.mediaDevices?.addEventListener?.('devicechange', ()=> restartMic("devicechange"));
   }
+  async function resumeAudio(){ try{ if (audioCtx && audioCtx.state!=="running"){ await audioCtx.resume(); updateCtxState(); } }catch{} }
+  function updateCtxState(){ ctxStateEl.textContent = audioCtx ? audioCtx.state : "—"; }
 
-  async function resumeAudio(){
-    try { if (audioCtx && audioCtx.state !== 'running'){ await audioCtx.resume(); updateCtxState(); } } catch {}
-  }
-
-  async function restartMic(reason="watchdog"){
-    try { await buildGraph(); } catch (e){ console.warn("Mic restart failed:", e); }
-  }
-
-  // ===== Drone Synth =====
-  function freqToNoteName(f){
-    if(!isFinite(f) || f<=0) return "—";
-    const n = Math.round(12 * Math.log2(f / A4)) + 69;
-    const name = NOTE_NAMES[(n % 12 + 12) % 12];
-    const octave = Math.floor(n/12) - 1;
-    return `${name}${octave}`;
-  }
-
-  function setTargetsFromDetection(detectedHzList){
-    let targets = [];
-    const useDetected = harmUseDetectedEl.checked;
-    const addStack = harmStackEl.checked;
-
-    if (useDetected && detectedHzList.length){
-      targets = detectedHzList.slice(0,3)
-        .map(f => quantizeToEqualTemperament(f))
-        .filter((f,i,arr)=> i===arr.findIndex(x=>Math.abs(x-f)<0.5));
-    } else if (lastStableFreq > 0){
-      targets = [quantizeToEqualTemperament(lastStableFreq)];
-    }
-    if (!targets.length && lastStableFreq>0){
-      targets = [quantizeToEqualTemperament(lastStableFreq)];
-    }
-    if (addStack && targets.length){
-      const root = targets[0];
-      const fifth = root * Math.pow(2, 7/12);
-      const ninth = root * Math.pow(2, 14/12);
-      targets = Array.from(new Set([...targets, fifth, ninth]));
-    }
-    setDroneTargets(targets);
-  }
-
+  // ===== Drone synth =====
   function setDroneTargets(freqs){
-    if (!audioCtx) return;
-    const now = audioCtx.currentTime;
-    const attack = parseFloat(attackEl.value);
-    const release = parseFloat(releaseEl.value);
+    if (!audioCtx || !envGain) return;
+    const now=audioCtx.currentTime, attack=parseFloat(attackEl.value), release=parseFloat(releaseEl.value);
+    droneVoices.forEach(v=>v._used=false);
 
-    droneVoices.forEach(v => v._used = false);
-
-    freqs.forEach(f => {
-      let v = droneVoices.find(v => Math.abs(v.targetFreq - f) < 0.5);
+    freqs.forEach(f=>{
+      let v = droneVoices.find(v=>Math.abs(v.targetFreq-f)<0.5);
       if (!v){ v = makeVoice(f); droneVoices.push(v); }
-      v._used = true;
-      v.osc1.frequency.exponentialRampToValueAtTime(f * 0.995, now + 0.04);
-      v.osc2.frequency.exponentialRampToValueAtTime(f * 1.005, now + 0.04);
-      v.targetFreq = f;
+      v._used=true;
+      v.osc1.frequency.setValueAtTime(f*0.995, now);
+      v.osc2.frequency.setValueAtTime(f*1.005, now);
+      v.targetFreq=f;
       v.gain.cancelScheduledValues(now);
       v.gain.linearRampToValueAtTime(v.level, now + attack*0.6);
     });
 
-    for (let i=droneVoices.length-1; i>=0; i--){
-      const v = droneVoices[i];
+    for (let i=droneVoices.length-1;i>=0;i--){
+      const v=droneVoices[i];
       if (!v._used && !holdEl.checked){
         v.gain.cancelScheduledValues(now);
         v.gain.linearRampToValueAtTime(0.0, now + release);
@@ -405,296 +311,139 @@
     envGain.gain.cancelScheduledValues(now);
     envGain.gain.linearRampToValueAtTime(tgt, now + (tgt>0?attack:release));
   }
-
   function makeVoice(freq){
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const mix = audioCtx.createGain(); mix.gain.value = 0.0;
-    const voiceFilter = audioCtx.createBiquadFilter(); voiceFilter.type = 'lowpass'; voiceFilter.frequency.value = parseFloat(toneEl.value);
-    const lfo = audioCtx.createOscillator(); const lfoG = audioCtx.createGain();
-    lfo.frequency.value = 0.12 + Math.random()*0.08; lfoG.gain.value = 4 + Math.random()*4;
-    lfo.connect(lfoG).connect(osc2.detune);
-
-    osc1.type = 'sawtooth'; osc2.type = 'triangle';
-    osc1.frequency.value = freq * 0.995; osc2.frequency.value = freq * 1.005;
-
-    const now = audioCtx.currentTime;
-    osc1.start(now + Math.random()*0.002);
-    osc2.start(now + Math.random()*0.002);
-    lfo.start();
-
-    const level = 0.25 / Math.sqrt(1 + droneVoices.length);
-    osc1.connect(mix); osc2.connect(mix);
-    mix.connect(voiceFilter).connect(envGain);
-
-    return { osc1, osc2, gain: mix, level, targetFreq: freq, lfo, voiceFilter, _used: true };
+    const osc1=audioCtx.createOscillator(), osc2=audioCtx.createOscillator();
+    const mix=audioCtx.createGain(); mix.gain.value=0.0;
+    const voiceFilter=audioCtx.createBiquadFilter(); voiceFilter.type="lowpass"; voiceFilter.frequency.value=parseFloat(toneEl.value);
+    const lfo=audioCtx.createOscillator(), lfoG=audioCtx.createGain(); lfo.frequency.value=0.12+Math.random()*0.08; lfoG.gain.value=4+Math.random()*4; lfo.connect(lfoG).connect(osc2.detune);
+    osc1.type="sawtooth"; osc2.type="triangle"; osc1.frequency.value=freq*0.995; osc2.frequency.value=freq*1.005;
+    osc1.connect(mix); osc2.connect(mix); mix.connect(voiceFilter).connect(envGain);
+    const now=audioCtx.currentTime; osc1.start(now+Math.random()*0.002); osc2.start(now+Math.random()*0.002); lfo.start();
+    const level = 0.25/Math.sqrt(1+droneVoices.length);
+    return { osc1, osc2, gain:mix, level, targetFreq:freq, lfo, voiceFilter, _used:true };
   }
 
-  function setToneCutoff(val){
-    if (!lpFilter) return;
-    lpFilter.frequency.value = val;
-    droneVoices.forEach(v => v.voiceFilter.frequency.value = val);
-  }
-
-  function buildImpulseResponse(ctx, duration=2.5, decay=0.5){
-    const rate = ctx.sampleRate, length = Math.floor(rate * duration);
-    const impulse = ctx.createBuffer(2, length, rate);
-    for (let ch=0; ch<2; ch++){
-      const data = impulse.getChannelData(ch);
-      for (let i=0; i<length; i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/length, decay*3);
-    }
-    return impulse;
-  }
-
-  // ===== Pitch & Analysis =====
+  // ===== Pitch / analysis =====
   function analysisLoop(){
-    if(!audioCtx) return;
+    if (!audioCtx || !analyser) return;
 
     analyser.getFloatTimeDomainData(timeData);
     analyserFFT.getFloatFrequencyData(freqData);
 
-    // RMS / meter
-    let rms = 0; for (let i=0;i<timeData.length;i++){ const v=timeData[i]; rms += v*v; }
-    rms = Math.sqrt(rms / timeData.length);
-    const db = rmsToDbfs(rms);
-    inDbEl.textContent = `${db.toFixed(1)} dBFS`;
-    drawInputMeter(db);
+    // Meter
+    let rms=0; for (let i=0;i<timeData.length;i++){ const v=timeData[i]; rms+=v*v; }
+    rms=Math.sqrt(rms/timeData.length); const db=rmsToDbfs(rms);
+    inDbEl.textContent=`${db.toFixed(1)} dBFS`; drawInputMeter(db);
 
-    // Watchdog: if continuous silence, restart mic
-    if (db < -85) { silenceFrames++; } else { silenceFrames = 0; }
-    if (silenceFrames > 120) { silenceFrames = 0; restartMic("silence watchdog"); }
+    // Watchdog
+    if (db<-85) silenceFrames++; else silenceFrames=0;
+    if (silenceFrames>120){ silenceFrames=0; restartMic("silence watchdog"); }
 
     // Pitch
     const freq = autoCorrelate(timeData, audioCtx.sampleRate);
+    if (freq && Math.abs(freq-lastStableFreq)<1.5) stableCount=Math.min(60,stableCount+1);
+    else if (freq) stableCount=Math.max(0,stableCount-2);
+    else stableCount=Math.max(0,stableCount-4);
+    if (freq) lastStableFreq=lastStableFreq*0.85+freq*0.15;
 
-    // Stability
-    if (freq && Math.abs(freq - lastStableFreq) < 1.5) stableCount = Math.min(60, stableCount+1);
-    else if (freq) stableCount = Math.max(0, stableCount-2);
-    else stableCount = Math.max(0, stableCount-4);
-    if (freq) lastStableFreq = (lastStableFreq*0.85 + freq*0.15);
-
-    // Display
-    noteName.textContent = freq ? freqToNoteName(freq) : '—';
-    hzReadout.textContent = freq ? `${freq.toFixed(1)} Hz` : '— Hz';
+    noteName.textContent = freq ? freqToNoteName(freq) : "—";
+    hzReadout.textContent = freq ? `${freq.toFixed(1)} Hz` : "— Hz";
     stabilityEl.textContent = `stability: ${stableCount}`;
 
     // Peaks
     const peaks = topPeaksFromFFT(freqData, audioCtx.sampleRate, analyserFFT.fftSize, 3);
-    multiNotes.textContent = peaks.length ? peaks.map(p=>freqToNoteName(p)).join(' • ') : '—';
+    multiNotes.textContent = peaks.length ? peaks.map(p=>freqToNoteName(p)).join(" • ") : "—";
 
-    // LEDs
-    micLed.classList.toggle('warn', db > -12);
-    micLed.classList.toggle('bad', db > -3);
+    micLed.classList.toggle('warn', db>-12); micLed.classList.toggle('bad', db>-3);
 
     // Follow
     const gatedActive = db > parseFloat(gateEl.value);
-    const shouldFollow = autoFollowEl.checked && !testMode;
-    const confidence = (stableCount >= 6) && gatedActive;
-    if (shouldFollow && confidence) {
-      setTargetsFromDetection(peaks.length ? peaks : (freq? [freq] : []));
+    const confidence = (stableCount>=6) && gatedActive;
+    if (autoFollowEl.checked && confidence){
+      const targets = harmUseDetectedEl.checked && peaks.length ? peaks : (freq? [freq] : []);
+      if (harmStackEl.checked && targets.length){ const root=targets[0]; targets.push(root*Math.pow(2,7/12), root*Math.pow(2,14/12)); }
+      setDroneTargets(targets);
       synthLed.classList.add('on');
-    } else if (!holdEl.checked && !testMode && droneVoices.length===0) {
+    } else if (!holdEl.checked && droneVoices.length===0){
       synthLed.classList.remove('on');
     }
 
-    currentEnvLevel = currentEnvLevel * 0.85 + (envGain ? envGain.gain.value : 0) * 0.15;
+    currentEnvLevel = currentEnvLevel*0.85 + (envGain?envGain.gain.value:0)*0.15;
 
     requestAnimationFrame(analysisLoop);
   }
 
   function autoCorrelate(buf, sampleRate){
-    const SIZE = buf.length;
-    let rms = 0; for (let i=0;i<SIZE;i++){ const v = buf[i]; rms += v*v; }
-    rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.001) return null;
-
-    let r1=0, r2=SIZE-1, thres=0.2;
-    for (let i=0;i<SIZE/2;i++){ if (Math.abs(buf[i])<thres){ r1=i; break; } }
-    for (let i=1;i<SIZE/2;i++){ if (Math.abs(buf[SIZE-i])<thres){ r2=SIZE-i; break; } }
-    buf = buf.slice(r1, r2);
-    const newSize = buf.length;
-
-    const autocorr = new Float32Array(newSize);
-    for (let lag=0; lag<newSize; lag++){
-      let sum=0;
-      for (let i=0; i<newSize-lag; i++){ sum += buf[i]*buf[i+lag]; }
-      autocorr[lag] = sum;
-    }
-    let d=0; while (autocorr[d] > autocorr[d+1]) d++;
-    let maxPos = d, maxVal = -1;
-    for (let i=d; i<newSize; i++){
-      if (autocorr[i] > maxVal){ maxVal = autocorr[i]; maxPos = i; }
-    }
-    let T0 = maxPos;
-    if (T0>0 && T0<autocorr.length-1){
-      const x1 = autocorr[T0-1], x2 = autocorr[T0], x3 = autocorr[T0+1];
-      const a = (x1 + x3 - 2*x2)/2, b = (x3 - x1)/2;
-      if (a) T0 = T0 - b/(2*a);
-    }
-    const freq = sampleRate / T0;
-    if (freq > 30 && freq < 2000) return freq;
-    return null;
+    const SIZE=buf.length; let rms=0; for (let i=0;i<SIZE;i++){ const v=buf[i]; rms+=v*v; } rms=Math.sqrt(rms/SIZE);
+    if (rms<0.001) return null;
+    let r1=0,r2=SIZE-1,th=0.2; for (let i=0;i<SIZE/2;i++){ if (Math.abs(buf[i])<th){ r1=i; break; } }
+    for (let i=1;i<SIZE/2;i++){ if (Math.abs(buf[SIZE-i])<th){ r2=SIZE-i; break; } }
+    buf=buf.slice(r1,r2); const N=buf.length, ac=new Float32Array(N);
+    for (let lag=0; lag<N; lag++){ let s=0; for (let i=0;i<N-lag;i++){ s+=buf[i]*buf[i+lag]; } ac[lag]=s; }
+    let d=0; while (ac[d]>ac[d+1]) d++; let maxPos=d, maxVal=-1;
+    for (let i=d;i<N;i++){ if (ac[i]>maxVal){ maxVal=ac[i]; maxPos=i; } }
+    let T0=maxPos;
+    if (T0>0 && T0<N-1){ const x1=ac[T0-1],x2=ac[T0],x3=ac[T0+1]; const a=(x1+x3-2*x2)/2,b=(x3-x1)/2; if (a) T0=T0 - b/(2*a); }
+    const f=sampleRate/T0; return (f>30 && f<2000)?f:null;
   }
 
   function topPeaksFromFFT(fftFloatData, sampleRate, fftSize, count=3){
-    const nBins = fftFloatData.length;
-    const mags = new Float32Array(nBins);
-    for (let i=0; i<nBins; i++) mags[i] = Math.pow(10, fftFloatData[i]/20);
-
-    const peaks = [];
-    for (let i=4; i<nBins-4; i++){
-      const m = mags[i];
-      if (m > mags[i-1] && m > mags[i+1] && m > 0.003){
-        peaks.push({i, m});
-      }
-    }
-    peaks.sort((a,b)=>b.m - a.m);
-    const unique = [];
-    const minSepBins = 4;
-    for (let p of peaks){
-      if (unique.length >= count) break;
-      if (!unique.some(u => Math.abs(u.i - p.i) < minSepBins)) unique.push(p);
-    }
-    const freqs = unique.map(p => (p.i * sampleRate) / (2* nBins));
-    return freqs.map(f => quantizeToEqualTemperament(f));
+    const n=fftFloatData.length, mags=new Float32Array(n); for (let i=0;i<n;i++) mags[i]=Math.pow(10, fftFloatData[i]/20);
+    const peaks=[]; for (let i=4;i<n-4;i++){ const m=mags[i]; if (m>mags[i-1] && m>mags[i+1] && m>0.003) peaks.push({i,m}); }
+    peaks.sort((a,b)=>b.m-a.m); const uniq=[], sep=4;
+    for (const p of peaks){ if (uniq.length>=count) break; if (!uniq.some(u=>Math.abs(u.i-p.i)<sep)) uniq.push(p); }
+    return uniq.map(p => (p.i * sampleRate) / (2 * n)).map(f=>quantizeToEqualTemperament(f));
   }
-
-  function quantizeToEqualTemperament(f){
-    if (!f || !isFinite(f) || f<=0) return f;
-    const midi = Math.round(12 * Math.log2(f / A4) + 69);
-    return A4 * Math.pow(2, (midi - 69)/12);
-  }
+  function quantizeToEqualTemperament(f){ if(!f||!isFinite(f)||f<=0) return f; const midi=Math.round(12*Math.log2(f/A4)+69); return A4*Math.pow(2,(midi-69)/12); }
 
   // ===== Visuals =====
-  const noise = makeValueNoise(256);
-  let t = 0;
+  const noise=makeValueNoise(256); let t=0;
   function draw(){
-    const w = canvas.width, h = canvas.height;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(8,12,18,0.08)';
-    ctx.fillRect(0,0,w,h);
-
-    const intensity = clamp(currentEnvLevel, 0, 1);
-    const scale = 0.004 + 0.001 * intensity;
-    const layers = 3;
-    for (let L=0; L<layers; L++){
-      const alpha = 0.08 + 0.12 * intensity * (1-L/layers);
-      ctx.globalAlpha = alpha;
-      ctx.globalCompositeOperation = 'lighter';
-      const hue1 = 198, hue2 = 270;
-      const hue = hue1 + (hue2-hue1)*(0.3 + 0.7*intensity) + L*6;
-      ctx.fillStyle = `hsla(${hue}, 85%, ${40+L*4}%, ${alpha})`;
-
-      const step = 10 + L*4;
-      for (let y=0; y<h; y+=step){
-        for (let x=0; x<w; x+=step){
-          const n = fbmNoise(x*scale, y*scale, t*0.0005 + L*10);
-          const r = step * (0.8 + 1.8*n*intensity);
-          ctx.beginPath(); ctx.ellipse(x, y, r, r*0.7, 0, 0, Math.PI*2); ctx.fill();
-        }
-      }
+    const w=canvas.width,h=canvas.height;
+    ctx.globalCompositeOperation='source-over'; ctx.fillStyle='rgba(8,12,18,0.08)'; ctx.fillRect(0,0,w,h);
+    const intensity=clamp(currentEnvLevel,0,1), scale=0.004+0.001*intensity, layers=3;
+    for (let L=0;L<layers;L++){
+      const alpha=0.08+0.12*intensity*(1-L/layers); ctx.globalAlpha=alpha; ctx.globalCompositeOperation='lighter';
+      const hue=198+(270-198)*(0.3+0.7*intensity)+L*6; ctx.fillStyle=`hsla(${hue},85%,${40+L*4}%,${alpha})`;
+      const step=10+L*4;
+      for (let y=0;y<h;y+=step){ for (let x=0;x<w;x+=step){
+        const n=fbmNoise(x*scale,y*scale,t*0.0005+L*10), r=step*(0.8+1.8*n*intensity);
+        ctx.beginPath(); ctx.ellipse(x,y,r,r*0.7,0,0,Math.PI*2); ctx.fill();
+      }}
     }
-    ctx.globalAlpha = 1; t += 16;
-    requestAnimationFrame(draw);
+    ctx.globalAlpha=1; t+=16; requestAnimationFrame(draw);
   }
+  function makeValueNoise(n){ const a=new Float32Array(n); for (let i=0;i<n;i++) a[i]=Math.random(); return a; }
+  function valNoise1D(p){ const n=noise.length, i0=Math.floor(p)%n, i1=(i0+1)%n, t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; }
+  function fbmNoise(x,y,z){ let tot=0,amp=0.6,f=1; for (let o=0;o<4;o++){ const s=valNoise1D(x*f+y*f*1.37+z*f*0.77); tot+=s*amp; amp*=0.5; f*=2.1; } return tot; }
+  function drawInputMeter(db){ const w=inMeter.width,h=inMeter.height; mctx.clearRect(0,0,w,h);
+    const norm=Math.max(0,Math.min(1,(db+90)/90)); mctx.fillStyle='rgba(255,255,255,.06)'; mctx.fillRect(0,0,w,h);
+    mctx.fillStyle = norm>0.95 ? '#ff6b6b' : (norm>0.8 ? '#ffcc66' : '#69e089'); mctx.fillRect(0,0,Math.floor(w*norm),h); }
 
-  function drawInputMeter(rmsDb){
-    const w = inMeter.width, h = inMeter.height;
-    mctx.clearRect(0,0,w,h);
-    const norm = Math.max(0, Math.min(1, (rmsDb + 90) / 90)); // -90..0 dBFS -> 0..1
-    mctx.fillStyle = 'rgba(255,255,255,0.06)'; mctx.fillRect(0,0,w,h);
-    mctx.fillStyle = '#69e089'; if (norm > 0.8) mctx.fillStyle = '#ffcc66'; if (norm > 0.95) mctx.fillStyle = '#ff6b6b';
-    mctx.fillRect(0,0, Math.floor(w*norm), h);
-  }
-
-  function makeValueNoise(n){ const a = new Float32Array(n); for (let i=0;i<n;i++) a[i]=Math.random(); return a; }
-  function valNoise1D(p){ const n=noise.length; const i0=Math.floor(p)%n, i1=(i0+1)%n; const t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; }
-  function fbmNoise(x,y,z){ let total=0, amp=0.6, freq=1.0; for (let o=0;o<4;o++){ const s = valNoise1D(x*freq + y*freq*1.37 + z*freq*0.77); total += s*amp; amp*=0.5; freq*=2.1; } return total; }
-
-  // ===== UI & Buttons =====
-  startBtn.addEventListener('click', start);
-
-  resumeBtn.addEventListener('click', async ()=>{
-    await ensureRunningGraph();
-    await restartMic("manual");
-  });
-
-  beepBtn.addEventListener('click', async ()=>{
-    await ensureRunningGraph();
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    g.gain.value = 0.2;
-    osc.type = 'sine';
-    osc.frequency.value = 440;
-    osc.connect(g).connect(audioCtx.destination);
-    const now = audioCtx.currentTime;
-    osc.start(now);
-    osc.stop(now + 1.0);
-  });
-
-  testBtn.addEventListener('click', async ()=>{
-    await ensureRunningGraph();
-    testMode = !testMode;
-    testBtn.textContent = testMode ? "Stop Test Drone" : "Test Drone";
-    if (testMode){
-      const a = 440, e = a * Math.pow(2,7/12);
-      holdEl.checked = true;
-      setDroneTargets([a, e]);
-      synthLed.classList.add('on');
-    } else {
-      holdEl.checked = false;
-      setDroneTargets([]);
-      synthLed.classList.remove('on');
-    }
-  });
-
-  monitorMicEl.addEventListener('change', ()=>{
-    if (!monitorGain) return;
-    monitorGain.gain.value = monitorMicEl.checked ? 0.05 : 0.0; // very low level
-  });
-
-  // Sliders
-  micGainEl.addEventListener('input', e=>{ micGainVal.textContent=(+e.target.value).toFixed(2); if(micGain) micGain.gain.value=parseFloat(e.target.value); });
-  preampEl .addEventListener('input', e=>{ const db=parseFloat(e.target.value); preampVal.textContent=`+${db} dB`; if(preamp) preamp.gain.value=dbToGain(db); });
-  gateEl   .addEventListener('input', e=>{ const v=parseFloat(e.target.value); gateVal.textContent=`${v} dBFS`; });
-  volumeEl .addEventListener('input', e=>{ volVal.textContent=(+e.target.value).toFixed(2); if(outGain) outGain.gain.value=parseFloat(e.target.value); });
-  attackEl .addEventListener('input', e=>{ attackVal.textContent=(+e.target.value).toFixed(2)+'s'; });
-  releaseEl.addEventListener('input', e=>{ releaseVal.textContent=(+e.target.value).toFixed(2)+'s'; });
-  toneEl   .addEventListener('input', e=>{ toneVal.textContent=Math.round(+e.target.value)+' Hz'; setToneCutoff(parseFloat(e.target.value)); });
-  chorusEl .addEventListener('input', e=>{ const v=parseFloat(e.target.value); chorusVal.textContent=v.toFixed(2);
-    if(chorusDelay1&&chorusDelay2){ chorusDelay1.delayTime.value=0.008+0.016*v; chorusDelay2.delayTime.value=0.012+0.020*v; } });
-  reverbEl .addEventListener('input', e=>{ const v=parseFloat(e.target.value); reverbVal.textContent=v.toFixed(2); if(reverbMix) reverbMix.gain.value=v; });
-
-  autoFollowEl.addEventListener('change', ()=>{ if (autoFollowEl.checked) synthLed.classList.add('on'); });
-  holdEl.addEventListener('change', ()=>{ if (!holdEl.checked && !autoFollowEl.checked) setDroneTargets([]); });
-  harmUseDetectedEl.addEventListener('change', ()=>{ if (autoFollowEl.checked) setTargetsFromDetection([]); });
-  harmStackEl.addEventListener('change', ()=>{ if (autoFollowEl.checked) setTargetsFromDetection([]); });
+  // ===== UI bindings =====
+  micGainEl.oninput = e=>{ micGainVal.textContent=(+e.target.value).toFixed(2); if(micGain) micGain.gain.value=parseFloat(e.target.value); };
+  preampEl .oninput = e=>{ const db=parseFloat(e.target.value); preampVal.textContent=`+${db} dB`; if(preamp) preamp.gain.value=dbToGain(db); };
+  gateEl   .oninput = e=>{ gateVal.textContent=`${(+e.target.value).toFixed(0)} dBFS`; };
+  volumeEl .oninput = e=>{ volVal .textContent=(+e.target.value).toFixed(2); if(outGain) outGain.gain.value=parseFloat(e.target.value); };
+  attackEl .oninput = e=>{ attackVal.textContent=(+e.target.value).toFixed(2)+'s'; };
+  releaseEl.oninput = e=>{ releaseVal.textContent=(+e.target.value).toFixed(2)+'s'; };
+  toneEl   .oninput = e=>{ toneVal  .textContent=Math.round(+e.target.value)+' Hz'; if(lpFilter) lpFilter.frequency.value=parseFloat(e.target.value); };
+  chorusEl .oninput = e=>{ const v=parseFloat(e.target.value); chorusVal.textContent=v.toFixed(2); if(chorusDelay1&&chorusDelay2){ chorusDelay1.delayTime.value=0.008+0.016*v; chorusDelay2.delayTime.value=0.012+0.020*v; } };
+  reverbEl .oninput = e=>{ const v=parseFloat(e.target.value); reverbVal.textContent=v.toFixed(2); if(reverbMix) reverbMix.gain.value=v; };
 
   function updateUIValues(){
-    micGainVal.textContent=(+micGainEl.value).toFixed(2);
-    preampVal.textContent =`+${(+preampEl.value).toFixed(0)} dB`;
-    gateVal.textContent   =`${(+gateEl.value).toFixed(0)} dBFS`;
-    volVal.textContent    =(+volumeEl.value).toFixed(2);
-    attackVal.textContent =(+attackEl.value).toFixed(2)+'s';
-    releaseVal.textContent=(+releaseEl.value).toFixed(2)+'s';
-    toneVal.textContent   =Math.round(+toneEl.value)+' Hz';
-    chorusVal.textContent =(+chorusEl.value).toFixed(2);
-    reverbVal.textContent =(+reverbEl.value).toFixed(2);
+    micGainVal.textContent=(+micGainEl.value).toFixed(2); preampVal.textContent=`+${(+preampEl.value).toFixed(0)} dB`;
+    gateVal.textContent=`${(+gateEl.value).toFixed(0)} dBFS`; volVal.textContent=(+volumeEl.value).toFixed(2);
+    attackVal.textContent=(+attackEl.value).toFixed(2)+'s'; releaseVal.textContent=(+releaseEl.value).toFixed(2)+'s';
+    toneVal.textContent=Math.round(+toneEl.value)+' Hz'; chorusVal.textContent=(+chorusEl.value).toFixed(2); reverbVal.textContent=(+reverbEl.value).toFixed(2);
   }
 
-  // Resize canvas to device pixels
-  function resizeCanvas(){
-    const ratio = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * ratio);
-    canvas.height = Math.floor(420 * ratio);
-  }
+  // ===== Canvas sizing =====
+  function resizeCanvas(){ const ratio=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect(); canvas.width=Math.floor(rect.width*ratio); canvas.height=Math.floor(420*ratio); }
   resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
-  // ===== Visuals helpers =====
-  function makeValueNoise(n){ const a = new Float32Array(n); for (let i=0;i<n;i++) a[i]=Math.random(); return a; }
-  function valNoise1D(p){ const n=noise.length; const i0=Math.floor(p)%n, i1=(i0+1)%n; const t=p-Math.floor(p); return (1-t)*noise[i0]+t*noise[i1]; }
-  function fbmNoise(x,y,z){ let total=0, amp=0.6, freq=1.0; for (let o=0;o<4;o++){ const s = valNoise1D(x*freq + y*freq*1.37 + z*freq*0.77); total += s*amp; amp*=0.5; freq*=2.1; } return total; }
+  // Kick off
+  startBtn.addEventListener('click', start);
 
 })();
 </script>
